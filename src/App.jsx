@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { supabase } from './supabaseClient.js'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { useNavigate } from 'react-router-dom'
 import './App.css'
 
 function Auth() {
+  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
@@ -14,7 +14,10 @@ function Auth() {
       password,
     })
     if (error) console.error('Error:', error.message)
-    else console.log('User created:', data)
+    else {
+      console.log('User created:', data)
+      navigate('/dashboard')
+    }
   }
 
   const handleSignIn = async () => {
@@ -23,35 +26,67 @@ function Auth() {
       password,
     })
     if (error) console.error('Error:', error.message)
-    else console.log('Logged in:', data)
-  }
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
+    else {
+      console.log('Logged in:', data)
+      navigate('/dashboard')
+    }
   }
 
   return (
+    <>
     <div>
-      <h2>Auth</h2>
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <button onClick={handleSignUp}>Sign Up</button>
-      <button onClick={handleSignIn}>Sign In</button>
-      <button onClick={handleSignOut}>Sign Out</button>
+      <h1>MacrosApp</h1>
+      <h2>Please sign in or sign up</h2>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          handleSignIn()
+        }}
+        style={{
+          display: 'flex',
+          gap: '10px',
+          margin: '10px',
+          alignItems: 'center',
+          flexDirection: 'column'
+        }}>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+      <div style={{ display: 'flex', gap: '10px', margin: '10px',
+        placeContent: 'center' }}> 
+        <button type="submit" onClick={handleSignIn}>Sign In</button> 
+        <button type="button" onClick={handleSignUp}>Sign Up</button>
+      </div>
+      </form>
     </div>
+    </>
   )
 }
 
+function App() {
+
+  return (
+    <>
+    <Auth />
+    </>
+  )
+}
+
+export default App
+
+
+/*
 function DataTest() {
   const [items, setItems] = useState([])
 
@@ -95,31 +130,4 @@ function DataTest() {
       </ul>
     </div>
   )
-}
-
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-      </div>
-      <Auth />
-      <DataTest />
-    </>
-  )
-}
-
-export default App
+}*/
