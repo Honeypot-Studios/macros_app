@@ -10,23 +10,22 @@ function Dashboard() {
     useEffect(() => {
         document.title = "MacrosApp | Dashboard"
         const getSession = async () => {
-            const { data: { session }, error } = await supabase.auth.getSession()
-            if (session) setUserID(session.user.id)
-            else {
-                console.error('Error fetching session:', error)
-                navigate('/')                
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession()
+                if (session) setUserID(session.user.id)
+                else {
+                    if (error) console.error('Error fetching session:', error)
+                    navigate('/')                
+                }
+            } catch (error) {
+                console.error('Error encountered:', error)
+                navigate('/')
+            } finally {
+                setLoading(false)
             }
-            setLoading(false)
         }
         getSession()
-    })
-
-    if (loading) {
-        return (
-            console.log('Loading session...'),
-            <div>Loading...</div>
-        )
-    }
+    }, [navigate])
 
     const handleSignOut = async () => {
         const { error } = await supabase.auth.signOut()
@@ -37,6 +36,13 @@ function Dashboard() {
             setUserID(null)
             navigate('/')
         }
+    }
+
+    if (loading) {
+        return (
+            console.log('Loading session...'),
+            <div>Loading...</div>
+        )
     }
 
     return (
@@ -56,10 +62,10 @@ function LogFood({ userID }) {
     const [items, setItems] = useState([])
 
     const [foodName, setFoodName] = useState('')
-    const [foodcalories, setCalories] = useState(0)
-    const [foodfat, setFat] = useState(0)
-    const [foodcarbs, setCarbs] = useState(0)
-    const [foodprotein, setProtein] = useState(0)
+    const [foodcalories, setCalories] = useState('')
+    const [foodfat, setFat] = useState('')
+    const [foodcarbs, setCarbs] = useState('')
+    const [foodprotein, setProtein] = useState('')
 
     const addFood = async () => {
         const { data, error } = await supabase
@@ -80,10 +86,10 @@ function LogFood({ userID }) {
         else {
             console.log('Added:', data)
             setFoodName('')
-            setCalories(0)
-            setFat(0)
-            setCarbs(0)
-            setProtein(0)
+            setCalories('')
+            setFat('')
+            setCarbs('')
+            setProtein('')
             fetchFoods()
         }
     }
@@ -116,9 +122,9 @@ function LogFood({ userID }) {
         }
     }
 
-    // useEffect(() => {
-    //     if (userID) fetchFoods()
-    // })
+    useEffect(() => {
+        if (userID) fetchFoods()       
+    }, [userID])
 
     return (
         <>
