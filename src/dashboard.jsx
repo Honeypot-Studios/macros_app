@@ -116,9 +116,9 @@ function LogFood({ userID }) {
         }
     }
 
-    useEffect(() => {
-        if (userID) fetchFoods()
-    })
+    // useEffect(() => {
+    //     if (userID) fetchFoods()
+    // })
 
     return (
         <>
