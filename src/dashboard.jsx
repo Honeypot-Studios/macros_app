@@ -123,46 +123,48 @@ function LogFood({ userID }) {
     return (
         <>
         <div>
-            <form>
-            <input
-                type="text"
-                placeholder="e.g. Chicken Breast"
-                value={foodName}
-                onChange={(e) => setFoodName(e.target.value)}
-                required
-            />
-            <input
-                type="number"
-                placeholder="e.g. 250"
-                value={foodcalories}
-                onChange={(e) => setCalories(e.target.value)}
-                required
-            />
-            <input
-                type="number"
-                placeholder="e.g. 11"
-                value={foodfat}
-                onChange={(e) => setFat(e.target.value)}
-                required
-            />
-            <input
-                type="number"
-                placeholder="e.g. 67"
-                value={foodcarbs}
-                onChange={(e) => setCarbs(e.target.value)}
-                required
-            />
-            <input
-                type="number"
-                placeholder="e.g. 21"
-                value={foodprotein}
-                onChange={(e) => setProtein(e.target.value)}
-                required
-            />
-
-            <div>
-                <button onClick={addFood}>Log New Food</button>     
-            </div>
+            <form onSubmit={(e) => {
+                e.preventDefault()
+                addFood()
+                }}>
+                <input
+                    type="text"
+                    placeholder="e.g. Chicken Breast"
+                    value={foodName}
+                    onChange={(e) => setFoodName(e.target.value)}
+                    required
+                />
+                <input
+                    type="number"
+                    placeholder="e.g. 250"
+                    value={foodcalories}
+                    onChange={(e) => setCalories(e.target.value)}
+                    required
+                />
+                <input
+                    type="number"
+                    placeholder="e.g. 11"
+                    value={foodfat}
+                    onChange={(e) => setFat(e.target.value)}
+                    required
+                />
+                <input
+                    type="number"
+                    placeholder="e.g. 67"
+                    value={foodcarbs}
+                    onChange={(e) => setCarbs(e.target.value)}
+                    required
+                />
+                <input
+                    type="number"
+                    placeholder="e.g. 21"
+                    value={foodprotein}
+                    onChange={(e) => setProtein(e.target.value)}
+                    required
+                />
+                <div>
+                    <button type="submit">Log New Food</button>     
+                </div>
             </form>
             <button onClick={fetchFoods}>Fetch All Foods</button>
         </div>
