@@ -8,21 +8,6 @@ function Auth() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
-  const handleSignUp = async () => {
-    const { data, error } = await supabase.auth.signUp({
-      email: email,
-      password: password,
-    })
-
-    if (error) {
-      console.error('Error signing up:', error.message)
-      return
-    }
-
-    console.log('User created successfully:', data)
-    navigate('/dashboard')
-  }
-
   const handleSignIn = async () => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email,
@@ -70,8 +55,8 @@ function Auth() {
         />
       <div style={{ display: 'flex', gap: '10px', margin: '10px',
         placeContent: 'center' }}> 
-        <button type="submit" onClick={handleSignIn}>Sign In</button>
-        <button type="button" onClick={handleSignUp}>Sign Up</button> 
+        <button type="submit">Sign In</button>
+        <button type="button" onClick={() => navigate('/signup')}>Sign Up</button> 
       </div>
       </form>
     </div>
@@ -80,7 +65,6 @@ function Auth() {
 }
 
 function App() {
-
   return (
     <>
     <Auth />
@@ -91,7 +75,7 @@ function App() {
 export default App
 
 
-/*
+/* Code Graveyard
 function DataTest() {
   const [items, setItems] = useState([])
 

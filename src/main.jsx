@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './index.css'
 import App from './App.jsx'
 import Dashboard from './dashboard'
+import SignUp from './signup'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -14,6 +15,8 @@ createRoot(document.getElementById('root')).render(
 
         {/* Dashboard page */}
         <Route path="/dashboard" element={<Dashboard />} />
+
+        <Route path="/signup" element={<SignUp />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,
