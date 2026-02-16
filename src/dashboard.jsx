@@ -19,7 +19,7 @@ function Dashboard() {
             setLoading(false)
         }
         getSession()
-    }, [])
+    })
 
     if (loading) {
         return (
@@ -118,7 +118,7 @@ function LogFood({ userID }) {
 
     useEffect(() => {
         if (userID) fetchFoods()
-    }, [userID])
+    })
 
     return (
         <>
