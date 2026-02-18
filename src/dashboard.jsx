@@ -90,7 +90,8 @@ function LogFood({ userID }) {
             setFat('')
             setCarbs('')
             setProtein('')
-            fetchFoods()
+            fetchTodayFoods
+            //fetchFoods()
         }
     }
 
@@ -105,6 +106,7 @@ function LogFood({ userID }) {
         if (error) console.error('Error:', error)
         else {
             console.log('Deleted:', data)
+            //fetchTodayFoods()
             fetchFoods()
         }
     }
@@ -122,8 +124,28 @@ function LogFood({ userID }) {
         }
     }
 
+    const fetchTodayFoods = async () => {
+        const date = new Date();
+        const formatted = date.toISOString().split('T')[0];
+
+        const tomorrow = new Date(date);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const nextDay = tomorrow.toISOString().split('T')[0];
+        const { data, error} = await supabase
+        .from('Food Log')
+        .select('*')
+        .eq('user_id', userID)
+        .gte('created_at', `${formatted}T00:00:00`)
+        .lt('created_at', `${nextDay}T00:00:00`)
+        if (error) console.error('Error:', error)
+        else {
+            console.log('Fetched:', data)
+            setItems(data)
+        }
+    }
+
     useEffect(() => {
-        if (userID) fetchFoods()       
+        if (userID) fetchTodayFoods()       
     }, [userID])
 
     return (
@@ -173,6 +195,7 @@ function LogFood({ userID }) {
                 </div>
             </form>
             <button onClick={fetchFoods}>Fetch All Foods</button>
+            <button onClick={fetchTodayFoods}>Fetch Todays Foods</button>
         </div>
         <div>
             <h3>Log History</h3>
