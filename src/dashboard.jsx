@@ -5,41 +5,26 @@ import './dashboard.css'
 
 function Dashboard() {
     const navigate = useNavigate();
-    const [items, setItems] = useState([])
+    
     const [userID, setUserID] = useState(null)
+    const [userData, setUserData] = useState(null)
+    const [items, setItems] = useState([])  // User's food log
+    const [todayItems, setTodayItems] = useState([])
+
     const [loading, setLoading] = useState(true)
     const [isPopUpOpen, setIsPopUpOpen] = useState(false)
 
-    const fetchTodayFoods = async () => {
-        const date = new Date();
-        const formatted = date.toISOString().split('T')[0];
-
-        const tomorrow = new Date(date);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const nextDay = tomorrow.toISOString().split('T')[0];
-        const { data, error} = await supabase
-        .from('Food Log')
-        .select('*')
-        .eq('user_id', userID)
-        .gte('created_at', `${formatted}T00:00:00`)
-        .lt('created_at', `${nextDay}T00:00:00`)
-        if (error) console.error('Error:', error)
-        else {
-            console.log('Fetched:', data)
-            setItems(data)
-        }
-    }
-
-    useEffect(() => {
-        if (userID) fetchTodayFoods()       
-    }, [userID])
-    
     useEffect(() => {
         document.title = "MacrosApp | Dashboard"
+        
         const getSession = async () => {
             try {
                 const { data: { session }, error } = await supabase.auth.getSession()
-                if (session) setUserID(session.user.id)
+                if (session) {
+                    setUserID(session.user.id)
+                    fetchUserData(session.user.id)
+                    fetchUserFoodData(session.user.id)
+                }
                 else {
                     if (error) console.error('Error fetching session:', error)
                     navigate('/')                
@@ -52,7 +37,39 @@ function Dashboard() {
             }
         }
         getSession()
+
     }, [navigate])
+
+    const fetchUserData = async (uid) => {
+        const { data: user, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('user_id', uid)
+        .single()
+
+        if (userError) console.log('Invalid User', userError)
+        else {
+            console.log('Retrieved User Data', user)
+            setUserData(user)
+        }
+    }
+    
+    const fetchUserFoodData = async (uid) => {
+        const { data: foodLog, foodError } = await supabase
+        .from('Food Log')
+        .select('*')
+        .eq('user_id', uid)
+
+        if (foodError) console.log('Error retrieving Food Log', foodError)
+        else {
+            console.log('Retrieved Food Log', foodLog)
+            setItems(foodLog)
+
+            const today = new Date().toISOString().split('T')[0]
+            const filteredToday = foodLog.filter(item => item.created_at.startsWith(today))
+            setTodayItems(filteredToday)
+        }
+    }
 
     const handleSignOut = async () => {
         const { error } = await supabase.auth.signOut()
@@ -76,27 +93,39 @@ function Dashboard() {
         <>
         <div>
             <h1>Dashboard</h1>
-            <CalculateDailyGoal userID={userID} />
             <button onClick={handleSignOut}>Go Back to log in</button>
         </div>
-        <MacroTotal items={items}/>
-        {/*<LogFood userID={userID} items={items} setItems={setItems}/>*/}
+        <CalculateDailyGoal
+            items={items}
+            userData={userData}
+        />
 
         <div>
             <button onClick={() => setIsPopUpOpen(true)}>Add Food</button>
-            <FoodLogpPopUp
+            <FoodLogPopUp
                 isOpen={isPopUpOpen}
                 onClose={() => setIsPopUpOpen(false)}
                 userID={userID}
                 items={items}
+                todayItems={todayItems}
                 setItems={setItems}
+                setTodayItems={setTodayItems}
             />
         </div>
+        <MacroTotal items={todayItems}/>
         </>
     )
 }
 
 function MacroTotal({items}) {
+    if (!items) {
+        return (
+            <div>
+                <p>calculating...</p>
+            </div>
+        )
+    }
+
     const totals = items.reduce((acc, item) => ({
         calories: acc.calories + Number(item.calories),
         fat: acc.fat + Number(item.fat),
@@ -117,8 +146,9 @@ function MacroTotal({items}) {
     )
 }
 
-function LogFood({ userID, items, setItems }) {
+function LogFood({ userID, items, todayItems, setItems, setTodayItems }) {
     const [loading, setLoading] = useState(false)
+    const [foodLogView, setFoodLogView] = useState(0)
 
     const [foodName, setFoodName] = useState('')
     const [foodcalories, setCalories] = useState('')
@@ -145,15 +175,17 @@ function LogFood({ userID, items, setItems }) {
         if (error) console.error('Error:', error)
         else {
             console.log('Added:', data)
+
+            setItems(prevToday => [...prevToday, data[0]])
+            setTodayItems(prevToday => [...prevToday, data[0]])
+
             setFoodName('')
             setCalories('')
             setFat('')
             setCarbs('')
             setProtein('')
-            fetchTodayFoods()
-            //fetchFoods()
-            setLoading(false)
         }
+        setLoading(false)
     }
 
     const deleteFood = async (targetID) => {
@@ -167,47 +199,16 @@ function LogFood({ userID, items, setItems }) {
         if (error) console.error('Error:', error)
         else {
             console.log('Deleted:', data)
-            //fetchTodayFoods()
-            fetchFoods()
+            // updating both food object arrays, upadting UI
+            setItems(prevItems => prevItems.filter(item => item.id !== targetID))
+            setTodayItems(prevTodayItems => prevTodayItems.filter(item => item.id !== targetID))
         }
     }
 
-    const fetchFoods = async () => {
-        const { data, error } = await supabase
-        .from('Food Log')
-        .select('*')
-        .eq('user_id', userID)
-        
-        if (error) console.error('Error:', error)
-        else {
-            console.log('Fetched:', data)
-            setItems(data)
-        }
+    const changeView = (setFoodLogView) => {
+        if (setFoodLogView === 0) return todayItems
+        return items
     }
-
-    const fetchTodayFoods = async () => {
-        const date = new Date();
-        const formatted = date.toISOString().split('T')[0];
-
-        const tomorrow = new Date(date);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const nextDay = tomorrow.toISOString().split('T')[0];
-        const { data, error} = await supabase
-        .from('Food Log')
-        .select('*')
-        .eq('user_id', userID)
-        .gte('created_at', `${formatted}T00:00:00`)
-        .lt('created_at', `${nextDay}T00:00:00`)
-        if (error) console.error('Error:', error)
-        else {
-            console.log('Fetched:', data)
-            setItems(data)
-        }
-    }
-
-    useEffect(() => {
-        if (userID) fetchTodayFoods()       
-    }, [userID])
 
     return (
         <>
@@ -268,14 +269,14 @@ function LogFood({ userID, items, setItems }) {
                         </button>   
                     </div>
                 </form>
-                <button onClick={fetchFoods}>Fetch All Foods</button>
-                <button onClick={fetchTodayFoods}>Fetch Todays Foods</button>
+                <button onClick={ () => setFoodLogView(1) }>Fetch All Foods</button>
+                <button onClick={ () => setFoodLogView(0) }>Fetch Todays Foods</button>
             </div>
             <div className='rightSection'>
                 <h3 className='popUpText'>Log History</h3>
                 <div className='foodListContainer'>
                     <ul>
-                    {items.map((item) => (
+                    {changeView(foodLogView).map((item) => (
                         <li key={item.id} className='popUpText' style={{ marginBottom: '10px' }}>
                         Food: {item.food_name ? `${item.food_name} ` : `${0} `}
                         - Calories: {item.calories ? `${item.calories} ` : `${0} `}
@@ -295,43 +296,25 @@ function LogFood({ userID, items, setItems }) {
     )
 }
 
-function CalculateDailyGoal( { userID }) {
+function CalculateDailyGoal( { items, userData }) {
+    // Don't calculate if userData or items hasn't been retrieved yet
+    if (!userData || !items) {
+        return (
+            <div>
+                <p>calculating...</p>
+            </div>
+        )
+    }
+    /*
     const [goals, setGoal] = useState({
         totalCalories: 0,
         totalFat: 0,
         totalCarbs: 0,
         totalProtein: 0
     })
-
-    const [userData, setUserData] = useState({
-        heightFeet: 0,
-        heightInches: 0,
-        weight_lbs: 0,
-        age: 0,
-        gender: ''
-    })
-
-    const fetchUserData = async () => {
-        const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('user_id', userID)
-        
-        if (error) console.error('Error:', error)
-        else {
-            console.log('Fetched:', data)
-            setUserData({
-                heightFeet: data[0].height_feet,
-                heightInches: data[0].height_inches,
-                weight_lbs: data[0].weight_lbs,
-                age: data[0].age,
-                gender: data[0].gender
-            })
-        }
-    }    
-
+    */
     const convert = () => {
-        const heightcm = ((userData.heightFeet * 12) + userData.heightInches)*2.54
+        const heightcm = ((userData.height_feet * 12) + userData.height_inches)*2.54
         const weightKg = userData.weight_lbs * 0.453592
         return { heightcm, weightKg }
     }
@@ -366,10 +349,6 @@ function CalculateDailyGoal( { userID }) {
     const tdee = calculatedTDEE()
     const proteingrams = proteinPercentage()
 
-    useEffect(() => {
-        if (userID) fetchUserData()
-    }, [userID])
-
     return (
         <>
         <div>
@@ -383,7 +362,7 @@ function CalculateDailyGoal( { userID }) {
     )
 }
 
-const FoodLogpPopUp = ( { isOpen, onClose, userID, items, setItems } ) => {
+const FoodLogPopUp = ( { isOpen, onClose, userID, items, todayItems, setItems, setTodayItems } ) => {
     if (!isOpen) return
 
     return (
@@ -391,7 +370,13 @@ const FoodLogpPopUp = ( { isOpen, onClose, userID, items, setItems } ) => {
         <div className='overlay'>
             <div className='modal'>
                 <button className='closeBtn' onClick={onClose}>X</button>
-                <LogFood userID={userID} items={items} setItems={setItems}/>
+                <LogFood
+                    userID={userID}
+                    items={items}
+                    todayItems={todayItems}
+                    setItems={setItems}
+                    setTodayItems={setTodayItems}
+                />
             </div>
         </div>
         </>
@@ -399,3 +384,41 @@ const FoodLogpPopUp = ( { isOpen, onClose, userID, items, setItems } ) => {
 }
 
 export default Dashboard
+
+
+// CODE GRAVEYARD
+    /*
+    const fetchFoods = async () => {
+        const { data, error } = await supabase
+        .from('Food Log')
+        .select('*')
+        .eq('user_id', userID)
+        
+        if (error) console.error('Error:', error)
+        else {
+            console.log('Fetched:', data)
+            setItems(data)
+        }
+    }
+    
+    const fetchTodayFoods = async () => {
+        const date = new Date();
+        const formatted = date.toISOString().split('T')[0];
+
+        const tomorrow = new Date(date);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const nextDay = tomorrow.toISOString().split('T')[0];
+        const { data, error } = await supabase
+        .from('Food Log')
+        .select('*')
+        .eq('user_id', userID)
+        .gte('created_at', `${formatted}T00:00:00`)
+        .lt('created_at', `${nextDay}T00:00:00`)
+
+        if (error) console.error("Error fetching today's food:", error)
+        else {
+            console.log("Fetched today's food:", data)
+            setItems(data)
+        }
+    }
+    */
