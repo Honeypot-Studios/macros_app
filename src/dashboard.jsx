@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 
 function Dashboard() {
     const navigate = useNavigate();
+    const [items, setItems] = useState([])
     const [userID, setUserID] = useState(null)
     const [loading, setLoading] = useState(true)    
     
@@ -52,15 +53,34 @@ function Dashboard() {
             <p>Put stuff here</p>
             <button onClick={handleSignOut}>Go Back to log in</button>
         </div>
-        <LogFood userID={userID} />
+        <MacroTotal items={items}/>
+        <LogFood userID={userID} items={items} setItems={setItems}/>
         </>
     )
 }
 
+function MacroTotal({items}) {
+    const totals = items.reduce((acc, item) => ({
+        calories: acc.calories + Number(item.calories),
+        fat: acc.fat + Number(item.fat),
+        carbs: acc.carbs + Number(item.carbs),
+        protein: acc.protein + Number(item.protein),
+    }), {calories: 0, fat: 0, carbs: 0, protein: 0})
 
-function LogFood({ userID }) {
-    const [items, setItems] = useState([])
+    return (
+        <>
+        <div>
+            <h2>Macro Totals</h2>
+            <p>Calories: {totals.calories}</p>
+            <p>Fat: {totals.fat}g</p>
+            <p>Carbs {totals.carbs}g:</p>
+            <p>Protein: {totals.protein}g</p>
+        </div>
+        </>
+    )
+}
 
+function LogFood({ userID, items, setItems }) {
     const [foodName, setFoodName] = useState('')
     const [foodcalories, setCalories] = useState('')
     const [foodfat, setFat] = useState('')
@@ -90,7 +110,7 @@ function LogFood({ userID }) {
             setFat('')
             setCarbs('')
             setProtein('')
-            fetchTodayFoods
+            fetchTodayFoods()
             //fetchFoods()
         }
     }
