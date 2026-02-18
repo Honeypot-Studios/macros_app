@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { supabase } from './supabaseClient.js'
 import { useNavigate } from 'react-router-dom'
 
-function signUp() {
+function SignUp() {
     const navigate = useNavigate()
     const [loading, setLoading] = useState(false)
     const [step, setStep] = useState(1)
@@ -216,7 +216,7 @@ function signUp() {
     )
 }
 
-export default signUp
+export default SignUp
 
 /* PREVIOUS RETURN STATEMENT FOR signUp() FUNCTION
     return (
