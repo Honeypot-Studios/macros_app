@@ -1,0 +1,70 @@
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-Items: center;
+    z-index: 1000
+}
+
+.modal {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 8px;
+    position: relative;
+    width: 800px
+}
+
+.closeBtn {
+    color:black;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    border: none;
+    background: none;
+    font-size: 20px;
+    cursor: pointer
+}
+
+.input {
+    display: block;
+    width: 100%;
+    margin-bottom: 1rem;
+    padding: 8px
+}
+
+.buttonGroup {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px
+}
+
+.popUpText {
+    color:black
+}
+
+.foodListContainer {
+    display: flex;
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 10px;
+    flex: 1
+}
+
+.leftSection {
+    flex: 1
+}
+
+.rightSection {
+    flex: 1
+}
+
+.popUpWrapper {
+    display: flex;
+    gap: 20px
+}

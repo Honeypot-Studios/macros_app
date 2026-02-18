@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient.js'
 import { useNavigate } from 'react-router-dom'
+import './dashboard.css'
 
 function Dashboard() {
     const navigate = useNavigate();
     const [items, setItems] = useState([])
     const [userID, setUserID] = useState(null)
-    const [loading, setLoading] = useState(true)    
+    const [loading, setLoading] = useState(true)
+    const [isPopUpOpen, setIsPopUpOpen] = useState(false)
     
     useEffect(() => {
         document.title = "MacrosApp | Dashboard"
@@ -50,11 +52,22 @@ function Dashboard() {
         <>
         <div>
             <h1>Dashboard</h1>
-            <p>Put stuff here</p>
+            <CalculateDailyGoal userID={userID} />
             <button onClick={handleSignOut}>Go Back to log in</button>
         </div>
         <MacroTotal items={items}/>
-        <LogFood userID={userID} items={items} setItems={setItems}/>
+        {/*<LogFood userID={userID} items={items} setItems={setItems}/>*/}
+
+        <div>
+            <button onClick={() => setIsPopUpOpen(true)}>Add Food</button>
+            <FoodLogpPopUp
+                isOpen={isPopUpOpen}
+                onClose={() => setIsPopUpOpen(false)}
+                userID={userID}
+                items={items}
+                setItems={setItems}
+            />
+        </div>
         </>
     )
 }
@@ -81,6 +94,8 @@ function MacroTotal({items}) {
 }
 
 function LogFood({ userID, items, setItems }) {
+    const [loading, setLoading] = useState(false)
+
     const [foodName, setFoodName] = useState('')
     const [foodcalories, setCalories] = useState('')
     const [foodfat, setFat] = useState('')
@@ -88,6 +103,7 @@ function LogFood({ userID, items, setItems }) {
     const [foodprotein, setProtein] = useState('')
 
     const addFood = async () => {
+        setLoading(true)
         const { data, error } = await supabase
         .from('Food Log')
         .insert([
@@ -112,6 +128,7 @@ function LogFood({ userID, items, setItems }) {
             setProtein('')
             fetchTodayFoods()
             //fetchFoods()
+            setLoading(false)
         }
     }
 
@@ -170,69 +187,188 @@ function LogFood({ userID, items, setItems }) {
 
     return (
         <>
-        <div>
-            <form onSubmit={(e) => {
-                e.preventDefault()
-                addFood()
+        <div className='popUpWrapper'>
+            <div className='leftSection'>
+                <h3 className='popUpText' >Log Food</h3>
+                <form onSubmit={(e) => {
+                    e.preventDefault()
+                    addFood()
                 }}>
-                <input
-                    type="text"
-                    placeholder="e.g. Chicken Breast"
-                    value={foodName}
-                    onChange={(e) => setFoodName(e.target.value)}
-                    required
-                />
-                <input
-                    type="number"
-                    placeholder="e.g. 250"
-                    value={foodcalories}
-                    onChange={(e) => setCalories(e.target.value)}
-                    required
-                />
-                <input
-                    type="number"
-                    placeholder="e.g. 11"
-                    value={foodfat}
-                    onChange={(e) => setFat(e.target.value)}
-                    required
-                />
-                <input
-                    type="number"
-                    placeholder="e.g. 67"
-                    value={foodcarbs}
-                    onChange={(e) => setCarbs(e.target.value)}
-                    required
-                />
-                <input
-                    type="number"
-                    placeholder="e.g. 21"
-                    value={foodprotein}
-                    onChange={(e) => setProtein(e.target.value)}
-                    required
-                />
-                <div>
-                    <button type="submit">Log New Food</button>     
+                    <p className='popUpText'>Food Name:</p>
+                    <input
+                        type="text"
+                        placeholder="e.g. Chicken Breast"
+                        value={foodName}
+                        onChange={(e) => setFoodName(e.target.value)}
+                        required
+                    />
+
+                    <p className='popUpText'>Calories:</p>
+                    <input
+                        type="number"
+                        placeholder="e.g. 250"
+                        value={foodcalories}
+                        onChange={(e) => setCalories(e.target.value)}
+                        required
+                    />
+
+                    <p className='popUpText'>Grams of Fat:</p>
+                    <input
+                        type="number"
+                        placeholder="e.g. 11"
+                        value={foodfat}
+                        onChange={(e) => setFat(e.target.value)}
+                        required
+                    />
+
+                    <p className='popUpText'>Grams of Carbs:</p>
+                    <input
+                        type="number"
+                        placeholder="e.g. 67"
+                        value={foodcarbs}
+                        onChange={(e) => setCarbs(e.target.value)}
+                        required
+                    />
+                    
+                    <p className='popUpText'>Grams of Proetin:</p>
+                    <input
+                        type="number"
+                        placeholder="e.g. 21"
+                        value={foodprotein}
+                        onChange={(e) => setProtein(e.target.value)}
+                        required
+                    />
+                    <div>
+                        <button type="submit" disabled={loading}>
+                            {loading ? 'Submitting...' : 'Log New Food'}
+                        </button>   
+                    </div>
+                </form>
+                <button onClick={fetchFoods}>Fetch All Foods</button>
+                <button onClick={fetchTodayFoods}>Fetch Todays Foods</button>
+            </div>
+            <div className='rightSection'>
+                <h3 className='popUpText'>Log History</h3>
+                <div className='foodListContainer'>
+                    <ul>
+                    {items.map((item) => (
+                        <li key={item.id} className='popUpText' style={{ marginBottom: '10px' }}>
+                        Food: {item.food_name ? `${item.food_name} ` : `${0} `}
+                        - Calories: {item.calories ? `${item.calories} ` : `${0} `}
+                        - Fat: {item.fat ? `${item.fat} ` : `${0} `}
+                        - Carbs: {item.carbs ? `${item.carbs} ` : `${0} `}
+                        - Protein: {item.protein ? `${item.protein}` : `${0}`}
+                        <button onClick={() => deleteFood(item.id)} style={{ marginLeft: '10px' }}>
+                            Delete
+                        </button>
+                        </li>
+                    ))}
+                    </ul>
                 </div>
-            </form>
-            <button onClick={fetchFoods}>Fetch All Foods</button>
-            <button onClick={fetchTodayFoods}>Fetch Todays Foods</button>
+            </div>
         </div>
+        </>
+    )
+}
+
+function CalculateDailyGoal( { userID }) {
+    const [goals, setGoal] = useState({
+        totalCalories: 0,
+        totalFat: 0,
+        totalCarbs: 0,
+        totalProtein: 0
+    })
+
+    const [userData, setUserData] = useState({
+        heightFeet: 0,
+        heightInches: 0,
+        weight_lbs: 0,
+        age: 0,
+        gender: ''
+    })
+
+    const fetchUserData = async () => {
+        const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('user_id', userID)
+        
+        if (error) console.error('Error:', error)
+        else {
+            console.log('Fetched:', data)
+            setUserData({
+                heightFeet: data[0].height_feet,
+                heightInches: data[0].height_inches,
+                weight_lbs: data[0].weight_lbs,
+                age: data[0].age,
+                gender: data[0].gender
+            })
+        }
+    }    
+
+    const convert = () => {
+        const heightcm = ((userData.heightFeet * 12) + userData.heightInches)*2.54
+        const weightKg = userData.weight_lbs * 0.453592
+        return { heightcm, weightKg }
+    }
+
+    const calculatedBMR = () => {
+        const { heightcm, weightKg } = convert()
+        
+        if (userData.gender === 'male') {
+            const bmr = (10 * weightKg) + (6.25 * heightcm) - (5 * userData.age) + 5
+            return bmr
+        } else if (userData.gender === 'female') {
+            const bmr = (10 * weightKg) + (6.25 * heightcm) - (5 * userData.age) - 161
+            return bmr
+        } else {
+            console.log('Invalid gender value', userData.gender)
+            return
+        }
+    }
+
+    const calculatedTDEE = () => {
+        const bmr = calculatedBMR()
+        const tdee = bmr * 1.55 // for now testing with moderate activity multiplier
+        return tdee
+    }
+
+    const proteinPercentage = () => {
+        const tdee = calculatedTDEE()
+        const proteinGrams = (userData.weight_lbs * 4) / tdee
+        return proteinGrams
+    }
+
+    const tdee = calculatedTDEE()
+    const proteingrams = proteinPercentage()
+
+    useEffect(() => {
+        if (userID) fetchUserData()
+    }, [userID])
+
+    return (
+        <>
         <div>
-            <h3>Log History</h3>
-            <ul>
-            {items.map((item) => (
-                <li key={item.id} style={{ marginBottom: '10px' }}>
-                Food: {item.food_name ? `${item.food_name} ` : `${0} `}
-                - Calories: {item.calories ? `${item.calories} ` : `${0} `}
-                - Fat: {item.fat ? `${item.fat} ` : `${0} `}
-                - Carbs: {item.carbs ? `${item.carbs} ` : `${0} `}
-                - Protein: {item.protein ? `${item.protein}` : `${0}`}
-                <button onClick={() => deleteFood(item.id)} style={{ marginLeft: '10px' }}>
-                    Delete
-                </button>
-                </li>
-            ))}
-            </ul>
+            <h3>Daily Goal</h3>
+            <p>Calories: {parseInt(tdee)}</p>
+            <p>Fat: {parseInt((tdee * (1 - (proteingrams + 0.4))) / 9)}g</p>
+            <p>Carbs: {parseInt((tdee * 0.4) / 4)}g</p>
+            <p>Protein: {parseInt((tdee * proteingrams) / 4)}g</p>
+        </div>
+        </>
+    )
+}
+
+const FoodLogpPopUp = ( { isOpen, onClose, userID, items, setItems } ) => {
+    if (!isOpen) return
+
+    return (
+        <>
+        <div className='overlay'>
+            <div className='modal'>
+                <button className='closeBtn' onClick={onClose}>X</button>
+                <LogFood userID={userID} items={items} setItems={setItems}/>
+            </div>
         </div>
         </>
     )
