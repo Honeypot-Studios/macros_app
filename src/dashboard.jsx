@@ -9,6 +9,30 @@ function Dashboard() {
     const [userID, setUserID] = useState(null)
     const [loading, setLoading] = useState(true)
     const [isPopUpOpen, setIsPopUpOpen] = useState(false)
+
+    const fetchTodayFoods = async () => {
+        const date = new Date();
+        const formatted = date.toISOString().split('T')[0];
+
+        const tomorrow = new Date(date);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const nextDay = tomorrow.toISOString().split('T')[0];
+        const { data, error} = await supabase
+        .from('Food Log')
+        .select('*')
+        .eq('user_id', userID)
+        .gte('created_at', `${formatted}T00:00:00`)
+        .lt('created_at', `${nextDay}T00:00:00`)
+        if (error) console.error('Error:', error)
+        else {
+            console.log('Fetched:', data)
+            setItems(data)
+        }
+    }
+
+    useEffect(() => {
+        if (userID) fetchTodayFoods()       
+    }, [userID])
     
     useEffect(() => {
         document.title = "MacrosApp | Dashboard"
