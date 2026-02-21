@@ -3,7 +3,6 @@ import { useState} from 'react'
 import { supabase } from "../supabaseClient";
 
 export default function LogFood({ userID, items, todayItems, setItems, setTodayItems}) {
-    const [loading, setLoading] = useState(false)
     const [foodLogView, setFoodLogView] = useState(0)
 
     const [foodName, setFoodName] = useState('')
@@ -12,8 +11,7 @@ export default function LogFood({ userID, items, todayItems, setItems, setTodayI
     const [foodcarbs, setCarbs] = useState('')
     const [foodprotein, setProtein] = useState('')
 
-    const addFood = async () => {
-        setLoading(true)
+    const addNewFood = async () => {
         const { data, error } = await supabase
         .from('Food Log')
         .insert([
@@ -41,7 +39,6 @@ export default function LogFood({ userID, items, todayItems, setItems, setTodayI
             setCarbs('')
             setProtein('')
         }
-        setLoading(false)
     }
 
     const deleteFood = async (targetID) => {
@@ -50,7 +47,7 @@ export default function LogFood({ userID, items, todayItems, setItems, setTodayI
         .delete()
         .eq('user_id', userID)
         .eq('id', targetID)
-        .select()
+        .single()
         
         if (error) console.error('Error:', error)
         else {
@@ -73,7 +70,7 @@ export default function LogFood({ userID, items, todayItems, setItems, setTodayI
                 <h3 className='popUpText' >Log Food</h3>
                 <form onSubmit={(e) => {
                     e.preventDefault()
-                    addFood()
+                    addNewFood()
                 }}>
                     <p className='popUpText'>Food Name:</p>
                     <input
@@ -120,9 +117,7 @@ export default function LogFood({ userID, items, todayItems, setItems, setTodayI
                         required
                     />
                     <div>
-                        <button type="submit" disabled={loading}>
-                            {loading ? 'Submitting...' : 'Log New Food'}
-                        </button>   
+                        <button type="submit">Log New Food</button>
                     </div>
                 </form>
                 <button onClick={ () => setFoodLogView(1) }>Fetch All Foods</button>
@@ -139,15 +134,18 @@ export default function LogFood({ userID, items, todayItems, setItems, setTodayI
                         - Fat: {item.fat ? `${item.fat} ` : `${0} `}
                         - Carbs: {item.carbs ? `${item.carbs} ` : `${0} `}
                         - Protein: {item.protein ? `${item.protein}` : `${0}`}
-                        <button onClick={() => deleteFood(item.id)} style={{ marginLeft: '10px' }}>
+                        <button
+                            onClick={() => deleteFood(item.id)}
+                            style={{ marginLeft: '10px' }}
+                        >
                             Delete
                         </button>
                         </li>
                     ))}
                     </ul>
                 </div>
-            </div>
+            </div>                
         </div>
         </>
-    )    
+    )
 }

@@ -1,14 +1,7 @@
 import React from 'react'
 
-export default function MacroTotal({ items} ) {
-    if (!items) {
-        return (
-            <div>
-                <p>calculating...</p>
-            </div>
-        )
-    }
-
+export default function MacroTotal({ items }) {
+    if (!items || items.length === 0) return <p>Loading Macro Totals...</p>
     const totals = items.reduce((acc, item) => ({
         calories: acc.calories + Number(item.calories),
         fat: acc.fat + Number(item.fat),

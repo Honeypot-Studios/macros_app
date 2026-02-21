@@ -9,14 +9,14 @@ import './dashboard.css'
 
 function Dashboard() {
     const navigate = useNavigate();
+    const [userDataLoading, setUserDataLoading] = useState(true)
+    const [isPopUpOpen, setIsPopUpOpen] = useState(false)    
     
     const [userID, setUserID] = useState(null)
     const [userData, setUserData] = useState(null)
+
     const [items, setItems] = useState([])  // User's food log
     const [todayItems, setTodayItems] = useState([])
-
-    const [loading, setLoading] = useState(true)
-    const [isPopUpOpen, setIsPopUpOpen] = useState(false)
 
     useEffect(() => {
         document.title = "MacrosApp | Dashboard"
@@ -37,7 +37,7 @@ function Dashboard() {
                 console.error('Error encountered:', error)
                 navigate('/')
             } finally {
-                setLoading(false)
+                setUserDataLoading(false)
             }
         }
         getSession()
@@ -68,7 +68,6 @@ function Dashboard() {
         else {
             console.log('Retrieved Food Log', foodLog)
             setItems(foodLog)
-            console.log(foodLog)
 
             const today = new Date().toISOString().split('T')[0]
             const filteredToday = foodLog.filter(item => item.created_at.startsWith(today))
@@ -86,14 +85,14 @@ function Dashboard() {
             navigate('/')
         }
     }
-
-    if (loading) {
+    
+    if (userDataLoading) {
         return (
             console.log('Loading session...'),
             <div>Loading...</div>
         )
     }
-
+    
     return (
         <>
         <div>
@@ -101,9 +100,10 @@ function Dashboard() {
             <button onClick={handleSignOut}>Go Back to log in</button>
         </div>
         <CalculateDailyGoal
-            items={items}
-            userData={userData}
+                items={items}
+                userData={userData}
         />
+        <MacroTotal items={todayItems}/>
 
         <div>
             <button onClick={() => setIsPopUpOpen(true)}>Add Food</button>
@@ -117,7 +117,6 @@ function Dashboard() {
                 setTodayItems={setTodayItems}
             />
         </div>
-        <MacroTotal items={todayItems}/>
         </>
     )
 }

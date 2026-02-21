@@ -1,3 +1,4 @@
+// converting user height and weight from imperial to metric
 export function convert(height_feet, height_inches, weight_lbs) {
     const heightcm = ((height_feet * 12) + height_inches)*2.54
     const weightKg = weight_lbs * 0.453592
