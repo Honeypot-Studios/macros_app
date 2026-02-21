@@ -64,15 +64,32 @@ function Dashboard() {
         .select('*')
         .eq('user_id', uid)
 
-        if (foodError) console.log('Error retrieving Food Log', foodError)
-        else {
-            console.log('Retrieved Food Log', foodLog)
-            setItems(foodLog)
-
-            const today = new Date().toISOString().split('T')[0]
-            const filteredToday = foodLog.filter(item => item.created_at.startsWith(today))
-            setTodayItems(filteredToday)
+        if (foodError) {
+            console.log('Error retrieving Food Log', foodError)
+            return
         }
+
+        console.log('Retrieved Food Log', foodLog)
+        setItems(foodLog)
+        fetchUserFoodToday(uid, foodLog)
+    }
+
+    const fetchUserFoodToday = async (uid,foodLog) => {
+        const { data: foodLogToday, foodLogTodayError } = await supabase
+        .from('Daily Food Log')
+        .select('*')
+        .eq('user_id', uid)
+
+        if (foodLogTodayError) {
+            console.log('Error retrieving daily Food Log', foodLogTodayError)
+            return
+        }
+
+        const today = new Date().toISOString().split('T')[0]
+        const filteredToday = foodLogToday.filter(item => item.logged_at.startsWith(today))
+        const todayFoodIDs = filteredToday.map((item) => item.food_id)
+        const todayFoods = foodLog.filter((item) => todayFoodIDs.includes(item.id))
+        setTodayItems(todayFoods)
     }
 
     const handleSignOut = async () => {
