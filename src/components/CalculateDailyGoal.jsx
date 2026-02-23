@@ -1,7 +1,7 @@
 import React from "react";
 import {convert, calculatedBMR, calculatedTDEE, proteinPercentage} from '../utils/macroCalculations'
 
-export default function CalculateDailyGoal({items, userData }) {
+export default function CalculateDailyGoal( {userData} ) {
     if (!userData) return <p>Loading Daily Goals...</p>
     /*
     const [goals, setGoal] = useState({

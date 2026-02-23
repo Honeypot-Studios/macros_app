@@ -2,7 +2,7 @@ import React from "react";
 import { useState} from 'react'
 import { supabase } from "../supabaseClient";
 
-export default function LogFood({ userID, items, todayItems, setItems, setTodayItems}) {
+export default function LogFood( {uid, foodLibrary, dailyEntries, setFoodLibrary, setDailyEntries} ) {
     const [foodLogView, setFoodLogView] = useState(0)
 
     const [foodName, setFoodName] = useState('')
@@ -10,13 +10,14 @@ export default function LogFood({ userID, items, todayItems, setItems, setTodayI
     const [foodfat, setFat] = useState('')
     const [foodcarbs, setCarbs] = useState('')
     const [foodprotein, setProtein] = useState('')
-
+    
     const addNewFood = async () => {
-        const { data: newFood, error } = await supabase
+        let logView = 1
+        const { data: newFoodEntry, error: newFoodError } = await supabase
         .from('Food Log')
         .insert([
             {
-                user_id: userID,
+                user_id: uid,
                 food_name: foodName,
                 calories: foodcalories,
                 fat: foodfat,
@@ -26,14 +27,15 @@ export default function LogFood({ userID, items, todayItems, setItems, setTodayI
         ])
         .select()
         
-        if (error) {
-            console.error('Error adding new food:', error)
+        if (newFoodError) {
+            console.error('Error adding new food:', newFoodError)
             return
         }
 
+        const newFood = {...newFoodEntry[0], 'Food Log': newFoodEntry[0]}
         console.log('Added new food:', newFood)
-        addFood(userID, newFood[0]) // as of now new food gets auto log to "Daily Food Log"
-                                    // thus addFood() saves new food into item and todatItems
+        setFoodLibrary(prev => [...prev, newFood])
+        addFoodToDaily(uid, newFoodEntry[0], logView)
         
         setFoodName('')
         setCalories('')
@@ -42,60 +44,79 @@ export default function LogFood({ userID, items, todayItems, setItems, setTodayI
         setProtein('')
     }
 
-    const addFood = async (userID, item) => {
-        const { data: logFoodToday, error: logFoodTodayError } = await supabase
+    const addFoodToDaily = async (uid, food, logView = 1) => {
+        let idName = null
+        let foodData = null
+        if (logView === 0) {
+            idName = 'food_id'
+            foodData = food['Food Log']
+        }
+        else {
+            idName = 'id'
+            foodData = food
+        }
+
+        const { data: dailyFoodEntry, error: DailyFoodEntryError } = await supabase
         .from('Daily Food Log')
         .insert([
             {
-                user_id: userID,
-                food_id: item.id
+                user_id: uid,
+                food_id: food[idName]
             }
         ])
         .select()
 
-        if (logFoodTodayError) {
-            console.error('Error adding logged food:', logFoodTodayError)
+        if (DailyFoodEntryError) {
+            console.error('Error adding logged food:', DailyFoodEntryError)
             return
         }
 
-        // ...item, id: logFoodToday[0].id, avoids duplicate key error in items array by
-        // replace id of the item in array with id from "Daily Food Log"
-        setItems(prevToday => [...prevToday, { ...item, id: logFoodToday[0].id }])
-        setTodayItems(prevToday => [...prevToday, { ...item, id: logFoodToday[0].id }])
+        const newDailyEntry = {...dailyFoodEntry[0], 'Food Log': foodData}
+        console.log("Added logged food to today's food log:", newDailyEntry)
+        setDailyEntries(prevToday => [...prevToday, newDailyEntry])
     }
 
-    const deleteFood = async (targetID) => {
-        const { data, error } = await supabase
-        .from('Food Log')
+    const deleteFood = async (uid, targetID, logView) => {
+        let table = null
+        if (logView === 0) table = 'Daily Food Log'
+        else table = 'Food Log'
+
+        const { error: deleteFoodError } = await supabase
+        .from(table)
         .delete()
-        .eq('user_id', userID)
+        .eq('user_id', uid)
         .eq('id', targetID)
         .single()
 
-        if (error) {
-            console.error('Error:', error)
+        if (deleteFoodError) {
+            console.error('Error deleting food:', deleteFoodError)
             return
         }
-
-        console.log('Deleted food item')
-        // updating both food object arrays, upadting UI
-        setItems(prevItems => prevItems.filter(item => item.id !== targetID))
-        setTodayItems(prevTodayItems => prevTodayItems.filter(item => item.id !== targetID))
-
-        // deleteFood only deletes logged food in the "Food Log"
-        // NEED to make seperate delete component to delete food logged in "Daily Food Log" table
+        
+        if (logView === 0) {
+            setDailyEntries(prevTodayItems => prevTodayItems.filter(food => food.id !== targetID))
+            console.log("Deleted food item from today's food log")
+        }
+        else {
+            setFoodLibrary(prevItems => prevItems.filter(food => food.id !== targetID))
+            console.log('Deleted food item from food log')
+        }
     }
 
-    const changeView = (setFoodLogView) => {
-        if (setFoodLogView === 0) return todayItems
-        return items
+    const changeItemsObject = (foodLogView) => {
+        if (foodLogView === 0) return dailyEntries
+        return foodLibrary
+    }
+
+    const getProperties = (food, prop) => {
+        return food['Food Log']?.[prop]
     }
 
     return (
         <>
         <div className='popUpWrapper'>
             <div className='leftSection'>
-                <h3 className='popUpText' >Log Food</h3>
+                <h3 className='popUpText'>Log Food</h3>
                 <form onSubmit={(e) => {
                     e.preventDefault()
                     addNewFood()
@@ -155,24 +176,31 @@ export default function LogFood({ userID, items, todayItems, setItems, setTodayI
                 <h3 className='popUpText'>Log History</h3>
                 <div className='foodListContainer'>
                     <ul>
-                        {changeView(foodLogView).map((item) => (
-                            <li key={item.id} className='popUpText' style={{ marginBottom: '10px' }}>
-                            Food: {item.food_name ? `${item.food_name} ` : `N/A `}
-                            - Calories: {item.calories ? `${item.calories} ` : `${0} `}
-                            - Fat: {item.fat ? `${item.fat} ` : `${0} `}
-                            - Carbs: {item.carbs ? `${item.carbs} ` : `${0} `}
-                            - Protein: {item.protein ? `${item.protein}` : `${0}`}
+                        {changeItemsObject(foodLogView).map((food) => (
+                            <li key={food.id} className='popUpText' style={{ marginBottom: '10px' }}>
+                            Food: {getProperties(food, 'food_name') || 'N/A '}
+                            - Calories: {getProperties(food, 'calories') || '0 '}
+                            - Fat: {getProperties(food, 'fat') || '0 '}
+                            - Carbs: {getProperties(food, 'carbs') || '0 '}
+                            - Protein: {getProperties(food, 'protein') || '0'}
                             <button
-                                onClick={() => addLoggedFood(userID,item)}
+                                onClick={() => addFoodToDaily(uid, food, foodLogView)}
                                 style={{ marginLeft: '10px' }}
                             >
                                 Add
                             </button>
                             <button
-                                onClick={() => deleteFood(item.id)}
+                                onClick={() => deleteFood(uid, food.id, foodLogView)}
                                 style={{ marginLeft: '10px' }}
                             >
                                 Delete
+                            </button>
+                            {/* Developer button*/}
+                            <button
+                                onClick={() => console.log("food:", food)}
+                                style={{ marginLeft: '10px' }}
+                            >
+                                Create console log
                             </button>
                             </li>
                         ))}
@@ -183,3 +211,18 @@ export default function LogFood({ userID, items, todayItems, setItems, setTodayI
         </>
     )
 }
+
+
+/*
+                            Food: {food.food_name || 'N/A '}
+                            - Calories: {food.calories || '0 '}
+                            - Fat: {food.fat || '0 '}
+                            - Carbs: {food.carbs || '0 '}
+                            - Protein: {food.protein || '0'}
+
+                            Food: {getProperties(foodLogView, Food, 'food_name') || 'N/A '}
+                            - Calories: {getProperties(foodLogView, Food, 'calories') || '0 '}
+                            - Fat: {getProperties(foodLogView, Food, 'fat') || '0 '}
+                            - Carbs: {getProperties(foodLogView, Food, 'carbs') || '0 '}
+                            - Protein: {getProperties(foodLogView, Food, 'protein') || '0'}
+*/

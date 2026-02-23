@@ -1,7 +1,7 @@
 import React from "react";
 import LogFood from './LogFood'
 
-export default function FoodLogPopUp({ isOpen, onClose, userID, items, todayItems, setItems, setTodayItems}) {
+export default function FoodLogPopUp({ isOpen, onClose, uid, foodLibrary, dailyEntries, setFoodLibrary, setDailyEntries}) {
     if (!isOpen) return null
 
     return (
@@ -10,11 +10,11 @@ export default function FoodLogPopUp({ isOpen, onClose, userID, items, todayItem
             <div className='modal'>
                 <button className='closeBtn' onClick={onClose}>X</button>
                 <LogFood
-                    userID={userID}
-                    items={items}
-                    todayItems={todayItems}
-                    setItems={setItems}
-                    setTodayItems={setTodayItems}
+                    uid={uid}
+                    foodLibrary={foodLibrary}
+                    dailyEntries={dailyEntries}
+                    setFoodLibrary={setFoodLibrary}
+                    setDailyEntries={setDailyEntries}
                 />
             </div>
         </div>
