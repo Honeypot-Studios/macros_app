@@ -1,10 +1,11 @@
-import React from "react";
-import { useState } from 'react'
-import { supabase } from "../supabaseClient";
+import React, { useState } from "react"
+import { supabase } from "../supabaseClient"
 import { getProperties, changeItemsObject } from "../utils/LogFoodUtils"
+import PublicBoolPopUp from "./PublicBoolPopUp"
 
 export default function LogFood( {uid, foodLibrary, dailyEntries, setFoodLibrary, setDailyEntries} ) {
     const [foodLogView, setFoodLogView] = useState(0)
+    const [boolPopUp, setBoolPopUp] = useState(false)
 
     const [foodName, setFoodName] = useState('')
     const [foodcalories, setCalories] = useState('')
@@ -104,25 +105,7 @@ export default function LogFood( {uid, foodLibrary, dailyEntries, setFoodLibrary
             console.log("Deleted food today's log")            
         }
     }
-
-    const changePublicBool = async (food) => {
-        const updates = {
-            'is_public': true
-        }
-        const { error: changeBoolError } = await supabase
-        .from('Food Log')
-        .update(updates)        
-        .eq('user_id', uid)
-        .eq('id', food.id)
-
-        if (changeBoolError) {
-            console.error('Failed to change "is_public" bool:', food)
-            return
-        }
-
-        console.log('Successfully changed "is_public" bool:', food)
-    }
-
+    
     return (
         <>
         <div className='popUpWrapper'>
@@ -206,12 +189,23 @@ export default function LogFood( {uid, foodLibrary, dailyEntries, setFoodLibrary
                             >
                                 Delete
                             </button>
+
+
+                            {/* WORK ON THIS */}
+                            {(foodLogView === 1) ? (
                             <button
-                                onClick={() => changePublicBool(food)}
+                                onClick={() => setBoolPopUp(true)}
                                 style={{ marginLeft: '10px' }}
                             >
                                 Share Food
-                            </button>
+                            </button>) : <></>}
+                            <PublicBoolPopUp
+                                uid={uid}
+                                food={food}
+                                isOpen={boolPopUp}
+                                onClose={() => setBoolPopUp(false)}
+                            />
+
                             {/* Developer button*/}
                             <button
                                 onClick={() => console.log("food:", food)}
@@ -229,17 +223,3 @@ export default function LogFood( {uid, foodLibrary, dailyEntries, setFoodLibrary
     )
 }
 
-
-/*
-                            Food: {food.food_name || 'N/A '}
-                            - Calories: {food.calories || '0 '}
-                            - Fat: {food.fat || '0 '}
-                            - Carbs: {food.carbs || '0 '}
-                            - Protein: {food.protein || '0'}
-
-                            Food: {getProperties(food, 'food_name') || 'N/A '}
-                            - Calories: {getProperties(food, 'calories') || '0 '}
-                            - Fat: {getProperties(food, 'fat') || '0 '}
-                            - Carbs: {getProperties(food, 'carbs') || '0 '}
-                            - Protein: {getProperties(food, 'protein') || '0'}
-*/
