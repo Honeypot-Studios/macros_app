@@ -1,6 +1,7 @@
 import React from "react";
-import { useState} from 'react'
+import { useState } from 'react'
 import { supabase } from "../supabaseClient";
+import { getProperties, changeItemsObject } from "../utils/LogFoodUtils"
 
 export default function LogFood( {uid, foodLibrary, dailyEntries, setFoodLibrary, setDailyEntries} ) {
     const [foodLogView, setFoodLogView] = useState(0)
@@ -44,7 +45,7 @@ export default function LogFood( {uid, foodLibrary, dailyEntries, setFoodLibrary
         setProtein('')
     }
 
-    const addFoodToDaily = async (uid, food, logView = 1) => {
+    const addFoodToDaily = async (uid, food, logView) => {
         let idName = null
         let foodData = null
         if (logView === 0) {
@@ -93,23 +94,33 @@ export default function LogFood( {uid, foodLibrary, dailyEntries, setFoodLibrary
             return
         }
         
-        if (logView === 0) {
-            setDailyEntries(prevTodayItems => prevTodayItems.filter(food => food.id !== targetID))
-            console.log("Deleted food item from today's food log")
+        if (logView === 1) {
+            setFoodLibrary(prevItems => prevItems.filter(food => food.id !== targetID))
+            setDailyEntries(prevTodayFood => prevTodayFood.filter(food => food.food_id !== targetID))
+            console.log('Deleted food from library')            
         }
         else {
-            setFoodLibrary(prevItems => prevItems.filter(food => food.id !== targetID))
-            console.log('Deleted food item from food log')
+            setDailyEntries(prevTodayFood => prevTodayFood.filter(food => food.id !== targetID))
+            console.log("Deleted food today's log")            
         }
     }
 
-    const changeItemsObject = (foodLogView) => {
-        if (foodLogView === 0) return dailyEntries
-        return foodLibrary
-    }
+    const changePublicBool = async (food) => {
+        const updates = {
+            'is_public': true
+        }
+        const { error: changeBoolError } = await supabase
+        .from('Food Log')
+        .update(updates)        
+        .eq('user_id', uid)
+        .eq('id', food.id)
 
-    const getProperties = (food, prop) => {
-        return food['Food Log']?.[prop]
+        if (changeBoolError) {
+            console.error('Failed to change "is_public" bool:', food)
+            return
+        }
+
+        console.log('Successfully changed "is_public" bool:', food)
     }
 
     return (
@@ -176,7 +187,7 @@ export default function LogFood( {uid, foodLibrary, dailyEntries, setFoodLibrary
                 <h3 className='popUpText'>Log History</h3>
                 <div className='foodListContainer'>
                     <ul>
-                        {changeItemsObject(foodLogView).map((food) => (
+                        {changeItemsObject(foodLogView, dailyEntries, foodLibrary).map((food) => (
                             <li key={food.id} className='popUpText' style={{ marginBottom: '10px' }}>
                             Food: {getProperties(food, 'food_name') || 'N/A '}
                             - Calories: {getProperties(food, 'calories') || '0 '}
@@ -194,6 +205,12 @@ export default function LogFood( {uid, foodLibrary, dailyEntries, setFoodLibrary
                                 style={{ marginLeft: '10px' }}
                             >
                                 Delete
+                            </button>
+                            <button
+                                onClick={() => changePublicBool(food)}
+                                style={{ marginLeft: '10px' }}
+                            >
+                                Share Food
                             </button>
                             {/* Developer button*/}
                             <button
@@ -220,9 +237,9 @@ export default function LogFood( {uid, foodLibrary, dailyEntries, setFoodLibrary
                             - Carbs: {food.carbs || '0 '}
                             - Protein: {food.protein || '0'}
 
-                            Food: {getProperties(foodLogView, Food, 'food_name') || 'N/A '}
-                            - Calories: {getProperties(foodLogView, Food, 'calories') || '0 '}
-                            - Fat: {getProperties(foodLogView, Food, 'fat') || '0 '}
-                            - Carbs: {getProperties(foodLogView, Food, 'carbs') || '0 '}
-                            - Protein: {getProperties(foodLogView, Food, 'protein') || '0'}
+                            Food: {getProperties(food, 'food_name') || 'N/A '}
+                            - Calories: {getProperties(food, 'calories') || '0 '}
+                            - Fat: {getProperties(food, 'fat') || '0 '}
+                            - Carbs: {getProperties(food, 'carbs') || '0 '}
+                            - Protein: {getProperties(food, 'protein') || '0'}
 */

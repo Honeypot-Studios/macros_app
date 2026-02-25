@@ -86,13 +86,6 @@ function Dashboard() {
             return
         }
 
-        // DEPRECATED, pass foodLog from fetchUserFoodData() function as parameter if using this
-        /*const today = new Date().toISOString().split('T')[0]
-        const filteredToday = foodLogToday.filter(food => food.logged_at.startsWith(today))
-        const todayFoodIDs = filteredToday.map((food) => food.food_id)
-        const todayFoods = foodLog.filter((food) => todayFoodIDs.includes(food.id))
-        console.log("Fetched today's food:", todayFoods)*/
-
         console.log("Fetched today's food log:", foodLogToday)
         setDailyEntries(foodLogToday)
     }
@@ -121,11 +114,8 @@ function Dashboard() {
             <h1>Dashboard</h1>
             <button onClick={handleSignOut}>Go Back to log in</button>
         </div>
-        <CalculateDailyGoal
-                //foodLibrary={foodLibrary}
-                userData={userData}
-        />
-        {/*<MacroTotal foodEntries={dailyEntries}/>*/}
+        <CalculateDailyGoal userData={userData}/>
+        <MacroTotal foodEntries={dailyEntries}/>
 
         <div>
             <button onClick={() => setIsPopUpOpen(true)}>Add Food</button>

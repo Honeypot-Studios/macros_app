@@ -1,13 +1,13 @@
 import React from 'react'
 
 export default function MacroTotal({ foodEntries }) {
-    if (!foodEntries || foodEntries.length === 0) return <p>Loading Macro Totals...</p>
+    if (!foodEntries) return <p>Loading Macro Totals...</p>
     
     const totals = foodEntries.reduce((acc, food) => ({
-        calories: acc.calories + Number(food?.calories || 0),
-        fat: acc.fat + Number(food?.fat || 0),
-        carbs: acc.carbs + Number(food?.carbs || 0),
-        protein: acc.protein + Number(food?.protein || 0),
+        calories: acc.calories + Number(food['Food Log']?.calories || 0),
+        fat: acc.fat + Number(food['Food Log']?.fat || 0),
+        carbs: acc.carbs + Number(food['Food Log']?.carbs || 0),
+        protein: acc.protein + Number(food['Food Log']?.protein || 0),
     }), {calories: 0, fat: 0, carbs: 0, protein: 0})
     
     return (
