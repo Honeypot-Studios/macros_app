@@ -1,0 +1,99 @@
+import { useEffect, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { supabase } from '../utils/supabaseClient.js'
+
+import useFoodStore from '../utils/useFoodStore.js'
+import useUserStore from '../utils/useUserStore.js'
+import { getEntry } from '../utils/FoodUtils.js'
+
+export default function Dashboard() {
+    const navigate = useNavigate()
+    // Show casing daily entries on users dashboard, need curView = 0
+    // when using getEntry() to get correct food entry data
+    const curView = 0
+    const loading = useUserStore((state) => state.loading)
+
+    //const userID = useUserStore((state) => state.userID)
+    const setUserID = useUserStore((state) => state.setUserID)
+    const getSession = useUserStore((state) => state.getSession)
+
+    const fetchFood = useFoodStore((state) => state.fetchFood)
+    const foodLibrary = useFoodStore((state) => state.foodLibrary)
+    const dailyEntries = useFoodStore((state) => state.dailyEntries)
+
+    useEffect(() => {
+        document.title = "Macros App | Dashboard"
+
+        const handleDataFetch = async() => {
+            try {
+                const userID = await getSession(navigate)
+
+                if (!userID) {
+                    console.warn('Issue with fetching userID')
+                    return
+                }
+                fetchFood(userID)
+                //console.log('dailyEntries in dashbord:', dailyEntries)
+            }
+            catch (error) {
+                console.error('Error encountered:', error.message)
+                return
+            }
+        }
+        handleDataFetch()
+    }, [navigate])
+
+    const foodMap = useMemo(() => {
+        const savedFoodMap = new Map(foodLibrary.map(food => [food.id, food]))
+        //console.log('savedFoodMap:', savedFoodMap)
+        return savedFoodMap
+    }, [foodLibrary])
+
+    const handleSignOut = async () => {
+        const { error: signOutError } = await supabase.auth.signOut()
+
+        if (signOutError) console.error('Error signing out:', signOutError.message)
+        else {
+            console.log('Signed out successfully')
+            setUserID(null)
+            navigate('/')
+        }
+    }
+
+    if (loading) {
+        //console.log('Loading Session')
+        return (
+            <div>
+                Loading...
+            </div>
+        )
+    }
+    
+    return (
+        <>
+        <div>
+            <h2>Dashboard</h2>
+            <button onClick={() => navigate('/ViewFood')}>View Food Library</button>
+        </div>
+        <div>
+            <h3>Daily Entries</h3>
+            {dailyEntries.map((food) => {
+                const entry = getEntry(curView, food, foodMap)
+                return (
+                    <li key={food.id} style={{ marginBottom: '10px' }}>
+                    Food: {entry.foodName}
+                    - Calories: {entry.calories}
+                    - Fat: {entry.fat}
+                    - Carbs: {entry.carbs}
+                    - Protein: {entry.protein}
+                    </li>
+                )
+            })}
+        </div>
+        <div>
+            <button onClick={handleSignOut}>Sign Out</button>
+            <button onClick={() => navigate('/UserProfile')}>Profile</button>
+        </div>
+        </>
+    )
+}
