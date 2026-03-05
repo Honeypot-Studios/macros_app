@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../utils/supabaseClient.js'
 
@@ -49,6 +49,22 @@ export default function Dashboard() {
         return savedFoodMap
     }, [foodLibrary])
 
+    const dailyTotal = useMemo(() => {
+        const total = dailyEntries.reduce((acc, entry) => {
+            const foodData = foodMap.get(entry.food_id)
+
+            if (foodData) {
+                acc.calories += (foodData.calories || 0)
+                acc.fat += (foodData.fat || 0)
+                acc.carbs += (foodData.carbs || 0)
+                acc.protein += (foodData.protein || 0)
+            }
+
+            return acc
+        }, { calories: 0, fat: 0, carbs: 0, protein: 0 })
+        return total
+     }, [dailyEntries, foodMap])
+
     const handleSignOut = async () => {
         const { error: signOutError } = await supabase.auth.signOut()
 
@@ -62,13 +78,9 @@ export default function Dashboard() {
 
     if (loading) {
         //console.log('Loading Session')
-        return (
-            <div>
-                Loading...
-            </div>
-        )
+        return <div>Loading...</div>
     }
-    
+
     return (
         <>
         <div>
@@ -76,19 +88,28 @@ export default function Dashboard() {
             <button onClick={() => navigate('/ViewFood')}>View Food Library</button>
         </div>
         <div>
+            <h3>Today's totals</h3>
+            <p>Calories: {dailyTotal.calories}</p>
+            <p>fat: {dailyTotal.fat}</p>
+            <p>carbs: {dailyTotal.carbs}</p>
+            <p>protein: {dailyTotal.protein}</p>
+        </div>
+        <div>
             <h3>Daily Entries</h3>
-            {dailyEntries.map((food) => {
-                const entry = getEntry(curView, food, foodMap)
-                return (
-                    <li key={food.id} style={{ marginBottom: '10px' }}>
-                    Food: {entry.foodName}
-                    - Calories: {entry.calories}
-                    - Fat: {entry.fat}
-                    - Carbs: {entry.carbs}
-                    - Protein: {entry.protein}
-                    </li>
-                )
-            })}
+            <ul>
+                {dailyEntries.map((food) => {
+                    const entry = getEntry(curView, food, foodMap)
+                    return (
+                        <li key={food.id} style={{ marginBottom: '10px' }}>
+                        Food: {entry.foodName}
+                        - Calories: {entry.calories}
+                        - Fat: {entry.fat}
+                        - Carbs: {entry.carbs}
+                        - Protein: {entry.protein}
+                        </li>
+                    )
+                })}
+            </ul>
         </div>
         <div>
             <button onClick={handleSignOut}>Sign Out</button>
