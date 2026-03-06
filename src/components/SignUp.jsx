@@ -3,10 +3,10 @@ import { supabase } from '../utils/supabaseClient.js'
 import { useNavigate } from 'react-router-dom'
 
 /*===================================================================*/
-//    TO DO(s):
-//        - make bfp optional for users to input
-//        - make optional to add phone numbers
-//            - Need to normalize numbers, use libphonenumber-js
+//  TO DO(s):
+//    - (Implemented) make bfp optional for users to input
+//    - (Maybe) make optional to add phone numbers
+//      - Need to normalize numbers, use libphonenumber-js
 /*===================================================================*/
 
 export default function SignUp() {
@@ -27,32 +27,30 @@ export default function SignUp() {
         weight: '',
         age: '',
         gender: '',
-
-        bfp: 15, // hard coded 0, change in the future
-
-        activity_level: 1.2 // Default as sedentary activity level
+        bfp: '',
+        activityLevel: 1.2 // Default as sedentary activity level
     })
 
-    const handleSignUp = async () => {
+    const handleSignUp = async (email, password, name, height, weight, age, gender, bfp, activityLevel) => {
         setLoading(true)    // Prevent multiple submissions
         
         const { data, error: signUpError } = await supabase.auth.signUp({
-        email: signUpData.email,
-        password: signUpData.password,
+        email: email,
+        password: password,
         options: {
             data: {
                 // When adding new data match string to left of ":"
                 // in the "Handle new user trigger" in SQL Editor
-                name: signUpData.name,
+                name: name,
 
-                //username: signUpData.userName,
+                //username: userName,
 
-                height: signUpData.height,
-                weight: signUpData.weight,
-                age: signUpData.age, 
-                gender: signUpData.gender,
-                bfp: signUpData.bfp,
-                activity_level: signUpData.activity_level
+                height: height,
+                weight: weight,
+                age: age, 
+                gender: gender,
+                bfp: (bfp === '' ? 0 : bfp),
+                activity_level: activityLevel
                 }
             }
         })
@@ -80,7 +78,7 @@ export default function SignUp() {
                 !signUpData.weight ||
                 !signUpData.age ||
                 !signUpData.gender ||
-                !signUpData.activity_level)
+                !signUpData.activityLevel)
             {
                 alert('Please fill out all fields')
                 return
@@ -111,9 +109,18 @@ export default function SignUp() {
         <>
         <form onSubmit={(e) => {
             e.preventDefault()
-            handleSignUp()
+            handleSignUp(
+                signUpData.email,
+                signUpData.password,
+                signUpData.name,
+                signUpData.height,
+                signUpData.weight,
+                signUpData.age,
+                signUpData.gender,
+                signUpData.bfp,
+                signUpData.activityLevel
+            )
         }}>
-
             {step === 1 && (
                 <div>
                 <h2>First name?</h2>
@@ -161,18 +168,17 @@ export default function SignUp() {
                         <option value="male">Male</option>
                         <option value="female">Female</option>
                     </select>
-
-                    {/* FIX bfp IN FUTURE: optional for user to input
-                    <input
-                        type="number"
-                        placeholder="15%"
-                        value={signUpData.bfp}
-                        onChange={(e) => setFormData({ ...signUpData, bfp: e.target.value })}
-                    />*/}
-                    
+                    <div>
+                        <input
+                            type="number"
+                            placeholder="15%"
+                            value={signUpData.bfp}
+                            onChange={(e) => setFormData({ ...signUpData, bfp: e.target.value })}
+                        />
+                    </div>
                     <select
-                        value={signUpData.activity_level}
-                        onChange={(e) => setFormData({ ...signUpData, activity_level: e.target.value })}
+                        value={signUpData.activityLevel}
+                        onChange={(e) => setFormData({ ...signUpData, activityLevel: e.target.value })}
                         required
                     >
                         <option value={1.2}>Sedentary (Little to no exercise)</option>

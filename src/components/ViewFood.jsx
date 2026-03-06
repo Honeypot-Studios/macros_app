@@ -6,13 +6,13 @@ import useFoodStore from '../utils/useFoodStore.js'
 import AddNewFood from './AddNewFood.jsx'
 import useUserStore from '../utils/useUserStore.js'
 
-/*===================================================================*/
+/*==========================================================================*/
 //  TO DO(s):
-//      - implement is_public, user can make their food public
-//          - Could have user pick individual food to be public OR
-//          - Have setting in profile if they want every food made to
-//            be public
-/*===================================================================*/
+//    - implement is_public, user can make their food public
+//      - (IMPLEMENTED) Could have user pick individual food to be public OR
+//      - (Scrap) )Have setting in profile if they want every food made to
+//        be public?
+/*==========================================================================*/
 
 export default function ViewFood() {
     const navigate = useNavigate()
