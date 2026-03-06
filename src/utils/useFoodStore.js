@@ -135,7 +135,23 @@ const useFoodStore = create((set, get) => ({
             set({ dailyEntries: curEntries.filter(food => food.id !== targetID) })
             //console.log("Deleted food today's log")
         }
-    }
+    },
+
+    calculateDailyTotal: (dailyEntries, foodMap) => {
+        const total = dailyEntries.reduce((acc, entry) => {
+            const foodData = foodMap.get(entry.food_id)
+
+            if (foodData) {
+                acc.calories += (foodData.calories || 0)
+                acc.fat += (foodData.fat || 0)
+                acc.carbs += (foodData.carbs || 0)
+                acc.protein += (foodData.protein || 0)
+            }
+
+            return acc
+        }, { calories: 0, fat: 0, carbs: 0, protein: 0 })
+        return total
+     }
 }))
 
 export default useFoodStore

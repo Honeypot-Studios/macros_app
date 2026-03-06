@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../utils/supabaseClient.js'
 
@@ -20,6 +20,7 @@ export default function Dashboard() {
     const fetchFood = useFoodStore((state) => state.fetchFood)
     const foodLibrary = useFoodStore((state) => state.foodLibrary)
     const dailyEntries = useFoodStore((state) => state.dailyEntries)
+    const calculateDailyTotal = useFoodStore((state) => state.calculateDailyTotal)
 
     useEffect(() => {
         document.title = "Macros App | Dashboard"
@@ -49,21 +50,9 @@ export default function Dashboard() {
         return savedFoodMap
     }, [foodLibrary])
 
-    const dailyTotal = useMemo(() => {
-        const total = dailyEntries.reduce((acc, entry) => {
-            const foodData = foodMap.get(entry.food_id)
-
-            if (foodData) {
-                acc.calories += (foodData.calories || 0)
-                acc.fat += (foodData.fat || 0)
-                acc.carbs += (foodData.carbs || 0)
-                acc.protein += (foodData.protein || 0)
-            }
-
-            return acc
-        }, { calories: 0, fat: 0, carbs: 0, protein: 0 })
-        return total
-     }, [dailyEntries, foodMap])
+    const handleDailyTotal = useMemo(() => {
+        return calculateDailyTotal(dailyEntries, foodMap)
+    }, [dailyEntries, foodMap])
 
     const handleSignOut = async () => {
         const { error: signOutError } = await supabase.auth.signOut()
@@ -89,13 +78,14 @@ export default function Dashboard() {
         </div>
         <div>
             <h3>Today's totals</h3>
-            <p>Calories: {dailyTotal.calories}</p>
-            <p>fat: {dailyTotal.fat}</p>
-            <p>carbs: {dailyTotal.carbs}</p>
-            <p>protein: {dailyTotal.protein}</p>
+            <p>Calories: {handleDailyTotal.calories}</p>
+            <p>fat: {handleDailyTotal.fat}</p>
+            <p>carbs: {handleDailyTotal.carbs}</p>
+            <p>protein: {handleDailyTotal.protein}</p>
         </div>
         <div>
             <h3>Daily Entries</h3>
+            {dailyEntries.length > 0 ?
             <ul>
                 {dailyEntries.map((food) => {
                     const entry = getEntry(curView, food, foodMap)
@@ -109,7 +99,8 @@ export default function Dashboard() {
                         </li>
                     )
                 })}
-            </ul>
+            </ul> : <p>No Food Yet!</p>
+            }
         </div>
         <div>
             <button onClick={handleSignOut}>Sign Out</button>
