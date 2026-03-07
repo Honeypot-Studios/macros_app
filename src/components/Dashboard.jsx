@@ -4,7 +4,6 @@ import { supabase } from '../utils/supabaseClient.js'
 
 import useFoodStore from '../utils/useFoodStore.js'
 import useUserStore from '../utils/useUserStore.js'
-import { getEntry } from '../utils/FoodUtils.js'
 
 export default function Dashboard() {
     const navigate = useNavigate()
@@ -44,15 +43,16 @@ export default function Dashboard() {
         handleDataFetch()
     }, [navigate])
 
-    const foodMap = useMemo(() => {
-        const savedFoodMap = new Map(foodLibrary.map(food => [food.id, food]))
-        //console.log('savedFoodMap:', savedFoodMap)
-        return savedFoodMap
-    }, [foodLibrary])
+    //! Deprecated
+    // const foodMap = useMemo(() => {
+    //     const savedFoodMap = new Map(foodLibrary.map(food => [food.id, food]))
+    //     //console.log('savedFoodMap:', savedFoodMap)
+    //     return savedFoodMap
+    // }, [foodLibrary])
 
     const handleDailyTotal = useMemo(() => {
-        return calculateDailyTotal(dailyEntries, foodMap)
-    }, [dailyEntries, foodMap])
+        return calculateDailyTotal(dailyEntries)
+    }, [dailyEntries])
 
     const handleSignOut = async () => {
         const { error: signOutError } = await supabase.auth.signOut()
@@ -88,14 +88,13 @@ export default function Dashboard() {
             {dailyEntries.length > 0 ?
             <ul>
                 {dailyEntries.map((food) => {
-                    const entry = getEntry(curView, food, foodMap)
                     return (
                         <li key={food.id} style={{ marginBottom: '10px' }}>
-                        Food: {entry.foodName}
-                        - Calories: {entry.calories}
-                        - Fat: {entry.fat}
-                        - Carbs: {entry.carbs}
-                        - Protein: {entry.protein}
+                            Food: {food.food_name}
+                            - Calories: {food.calories}
+                            - Fat: {food.fat}
+                            - Carbs: {food.carbs}
+                            - Protein: {food.protein}
                         </li>
                     )
                 })}

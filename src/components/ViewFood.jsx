@@ -1,18 +1,19 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { getEntry, changeObject, checkForDelete } from '../utils/FoodUtils.js'
+import { changeObject, checkForDelete } from '../utils/FoodUtils.js'
 import useFoodStore from '../utils/useFoodStore.js'
 import AddNewFood from './AddNewFood.jsx'
 import useUserStore from '../utils/useUserStore.js'
 
-/*==========================================================================*/
-//  TO DO(s):
-//    - implement is_public, user can make their food public
-//      - (IMPLEMENTED) Could have user pick individual food to be public OR
-//      - (Scrap) )Have setting in profile if they want every food made to
-//        be public?
-/*==========================================================================*/
+/*=======================================================*/
+//  TODO(s):
+//      - (Implement later) )Have setting in profile
+//        if they want every food made to be public?
+//*      - Need to get specific entries for daily entires
+//*        as foodLib and foodMap only hold a few entries
+//*        at a time
+/*=======================================================*/
 
 export default function ViewFood() {
     const navigate = useNavigate()
@@ -51,11 +52,17 @@ export default function ViewFood() {
         handleDataFetch()
     }, [navigate])
 
-    const foodMap = useMemo(() => {
-        const savedFoodMap = new Map(foodLibrary.map(food => [food.id, food]))
-        //console.log('savedFoodMap:', savedFoodMap)
-        return savedFoodMap
-    }, [foodLibrary])
+    //! Deprecated
+    // const foodMap = useMemo(() => {
+    //     const savedFoodMap = new Map(foodLibrary.map(food => [food.id, food]))
+    //     //console.log('savedFoodMap:', savedFoodMap)
+    //     return savedFoodMap
+    // }, [foodLibrary])
+
+    const debug = (food) => {
+        console.log("food:", food)
+        console.log('food food_id:', food.food_id)
+    }
 
     return (
         <>
@@ -71,34 +78,32 @@ export default function ViewFood() {
         <div>
             <ul>
                 {changeObject(curView, foodLibrary, dailyEntries).map((food) => {
-                    //console.log('curView:', curView)
-                    const entry = getEntry(curView, food, foodMap)
-                    const targetID = (curView === 0) ? 'food_id' : 'id'
+                    //console.log('dailyEntries:', dailyEntries)
                     return (
-                        <li key={food.id} className={{ marginBottom: '10px' }}>
-                            Food: {entry.foodName}
-                            - Calories: {entry.calories}
-                            - Fat: {entry.fat}
-                            - Carbs: {entry.carbs}
-                            - Protein: {entry.protein}
+                        <li key={food.id} style={{ marginBottom: '10px' }}>
+                            Food: {food.food_name}
+                            - Calories: {food.calories}
+                            - Fat: {food.fat}
+                            - Carbs: {food.carbs}
+                            - Protein: {food.protein}
                             <button
-                                onClick={() => addEntry(userID, food[targetID])}
-                                className={{ marginLeft: '10px' }}
+                                onClick={() => addEntry(userID, food)}
+                                style={{ marginLeft: '10px' }}
                             >
                                 Add
                             </button>
                             {checkForDelete(userID, curView, food) ? 
                                 <button
                                     onClick={() => deleteFood(userID, curView, food.id)}
-                                    className={{ marginLeft: '10px' }}
+                                    style={{ marginLeft: '10px' }}
                                 >
                                     Delete
                                 </button> : <></>
                             }
                             {/* Developer button */}
                             <button
-                                onClick={() => console.log("food:", food)}
-                                className={{ marginLeft: '10px' }}
+                                onClick={() => debug(food)}
+                                style={{ marginLeft: '10px' }}
                             >
                                 Create console log
                             </button>

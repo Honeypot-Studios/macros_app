@@ -11,7 +11,7 @@ export default function AddFoodPopUp( { userID, isOpen, onClose } ) {
     const addNewFood = useFoodStore((state) => state.addNewFood)
     const addEntry = useFoodStore((state) => state.addEntry)
 
-    const [foodName, setFoodName] = useState('')
+    const [food_name, setFoodName] = useState('')
     const [foodCalories, setCalories] = useState('')
     const [foodFat, setFat] = useState('')
     const [foodCarbs, setCarbs] = useState('')
@@ -20,15 +20,15 @@ export default function AddFoodPopUp( { userID, isOpen, onClose } ) {
     
     if (!isOpen) return
 
-    const handleNewFood = async (userID, name, cals, fat, carbs, protein, isPublic) => {
-        const newFoodID = await addNewFood(
+    const handleNewFood = async (userID, name, cals, fat, carbs, protein, is_public) => {
+        const newFood = await addNewFood(
             userID,
             name,
             cals,
             fat,
             carbs,
             protein,
-            isPublic
+            is_public
         )
         setFoodName('')
         setCalories('')
@@ -36,14 +36,14 @@ export default function AddFoodPopUp( { userID, isOpen, onClose } ) {
         setCarbs('')
         setProtein('')
         setFoodIsPublic(false)
-
-        //console.log('newFoodID from addNewFood:', newFoodID)
-        if (!newFoodID) {
+        
+        //console.log('newFood from addNewFood:', newFood)
+        if (!newFood) {
             console.error("Issue with getting ID for new food")
             return
         }
 
-        addEntry(userID, newFoodID)
+        addEntry(userID, newFood)
     }
 
     const debug = () => {
@@ -59,13 +59,13 @@ export default function AddFoodPopUp( { userID, isOpen, onClose } ) {
                 <div>
                     <form onSubmit={(e) => {
                         e.preventDefault()
-                        handleNewFood(userID, foodName, foodCalories, foodFat, foodCarbs, foodProtein, foodIsPublic)
+                        handleNewFood(userID, food_name, foodCalories, foodFat, foodCarbs, foodProtein, foodIsPublic)
                     }}>
                         <p className='popUpText'>Food Name:</p>
                         <input
                             type="text"
                             placeholder="e.g. Chicken Breast"
-                            value={foodName}
+                            value={food_name}
                             onChange={(e) => setFoodName(e.target.value)}
                             required
                         />

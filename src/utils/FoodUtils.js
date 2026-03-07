@@ -1,26 +1,27 @@
-export function getEntry (curView, food, foodMap) {
-    const view = (curView === 0) ? 'food_id' : 'id'
-    const savedFood = foodMap.get(food[view])
+//! Deprecated
+// export function getEntry (curView, food, foodMap) {
+//     const view = (curView === 0) ? 'food_id' : 'id'
+//     const savedFood = foodMap.get(food[view])
 
-    //console.log('view in getEntry:', view)
-    if (!savedFood) {
-        return {
-            foodName: 'N/A',
-            calories: 0,
-            fat: 0,
-            carbs: 0,
-            protein: 0
-        }
-    }
+//      //console.log('view in getEntry:', view)
+//     if (!savedFood) {
+//         return {
+//             food_name: 'N/A',
+//             calories: 0,
+//             fat: 0,
+//             carbs: 0,
+//             protein: 0
+//         }
+//     }
 
-    return {
-            foodName: savedFood.food_name,
-            calories: savedFood.calories,
-            fat: savedFood.fat,
-            carbs: savedFood.carbs,
-            protein: savedFood.protein
-    }
-}
+//     return {
+//             food_name: savedFood.food_name,
+//             calories: savedFood.calories,
+//             fat: savedFood.fat,
+//             carbs: savedFood.carbs,
+//             protein: savedFood.protein
+//     }
+// }
 
 export function changeObject(curView, foodLibrary, dailyEntries) {
     if (curView === 0) return dailyEntries || []

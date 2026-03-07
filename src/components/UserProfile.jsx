@@ -5,7 +5,16 @@ import { supabase } from "../utils/supabaseClient"
 
 import useUserStore from "../utils/useUserStore"
 
-
+/*=======================================================*/
+//   ToDo
+//*     - App Settings
+//          - unit preference (e.g. metric or imperial)
+//      - Profile pic (maybe)
+//*     - Account Management
+//          - Delete Account option
+//          - Display and change username
+//          - Change email (send confirmation to new email)
+/*=======================================================*/
 export default function UserProfile() {
     const navigate = useNavigate()
     const [loading, setLoading] = useState(false)
