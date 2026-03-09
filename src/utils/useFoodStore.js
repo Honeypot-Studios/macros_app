@@ -2,21 +2,25 @@ import { create } from 'zustand'
 import { supabase } from './supabaseClient.js'
 
 import { ErrorLogger } from './Debug.js'
+import { foodSearch } from './searchUtils.js'
 
 /*=======================================================*/
 // ToDo
 //!  - Yo MAMA
-//*  - Implement pagination
+//   - (Done) Implement pagination
+//   - (Done) Implement new array userEntries
 /*=======================================================*/
 
 const useFoodStore = create((set, get) => ({
     foodLibrary: [],
+    userEntries: [],
     dailyEntries: [],
 
     setFoodLibrary: (library) => set({ foodLibrary: library }),
+    setUserFoods: (entries) => set({ userEntries: entries}),
     setDailyEntries: (entries) => set({ dailyEntries: entries }),
 
-    fetchFood: async (userID) => {
+    fetchFood: async (userID, searchParam) => {
         if (!userID) {
             console.warn("Issue with userID, couldn't fetch food:", userID)
             return
@@ -31,26 +35,54 @@ const useFoodStore = create((set, get) => ({
         const endDateISO = endDate.toISOString()
 
         try {
-            const foodLibPromise = supabase
+            const foodLibPromise = foodSearch.fetchLib(userID, searchParam, 15)
+
+            const userEntPromise = supabase
             .from('Food Library')
             .select('*')
             .limit(15)
-            .or(`user_id.eq.${userID},is_public.eq.true`)
-
+            .eq('user_id', userID)
+            //.eq('is_public', true)
+            //.or(`user_id.eq.${userID},is_public.eq.true`)
+            
             const dailyEntPromise = supabase
             .from('Daily Entries')
-            .select('id, food_id, logged_at, "Food Library"(user_id, food_name, calories, fat, carbs, protein, is_public)')
+            .select(`
+                id, 
+                food_id, 
+                logged_at, 
+                "Food Library"(
+                    user_id, 
+                    food_name, 
+                    calories, 
+                    fat, 
+                    carbs, 
+                    protein, 
+                    is_public)`
+                )
             .eq('user_id', userID)
             .gte('logged_at', startDateISO)
             .lte('logged_at', endDateISO)
 
-            const [foodLibResolution, dailyEntResolution] = await Promise.all([foodLibPromise, dailyEntPromise])
-            
-            if (foodLibResolution.error) {
-                 ErrorLogger('useFoodStore.js - fetchFood', error)
+            const [foodLibRes, userEntResolution, dailyEntResolution] = await Promise.all(
+                [foodLibPromise, 
+                userEntPromise, 
+                dailyEntPromise]
+            )
+
+            if (foodLibRes.error) {
+                ErrorLogger('useFoodStore.js - fetchFood', error)
             }
-            //console.log('fetched food lib:', foodLibResolution.data)
-            set({ foodLibrary: foodLibResolution.data || []})
+            //console.log('foodLibRes.data:', foodLibRes.data)
+            set({ foodLibrary: foodLibRes.data || []})
+            
+            if (userEntResolution.error) {
+                ErrorLogger('useFoodStore.js - fetchFood', error)
+            }
+            //console.log('length of user entries:', get().userEntries.length)
+            // user@test.com has 510 entries
+            //console.log('fetched user entries:', userEntResolution.data)
+            set({ userEntries: userEntResolution.data || []})
             
             if (dailyEntResolution.error) {
                  ErrorLogger('useFoodStore.js - fetchFood', error)
@@ -92,6 +124,9 @@ const useFoodStore = create((set, get) => ({
         
         const curFoodLib = get().foodLibrary
         set({ foodLibrary: [...curFoodLib, newFood[0] ]})
+
+        const curUserEnts = get().userEntries
+        set({ userEntries: [...curUserEnts, newFood[0] ]})
         return newFood[0]
     },
 
@@ -149,7 +184,7 @@ const useFoodStore = create((set, get) => ({
         const curEntries = get().dailyEntries
         if (curView === 1) {
             set({ foodLibrary: curFoodLib.filter(food => food.id !== targetID)})
-            set({ dailyEntries: curEntries.filter(food => food.food_id !== targetID) })
+            set({ dailyEntries: curEntries.filter(food => food.id !== targetID) })
             //console.log('Deleted food from library')
         }
         else {
@@ -170,66 +205,3 @@ const useFoodStore = create((set, get) => ({
 }))
 
 export default useFoodStore
-
-
-//! Code Graveyard
-/* 
-        const { data: foodLibraryData, error: fetchError } = await supabase
-        .from('Food Library')
-        .select('*')
-        .or(`user_id.eq.${userID},is_public.eq.true`)
-
-        if (fetchError) console.log('Error retrieving Food Log', fetchError.message)
-        else set({ foodLibrary: foodLibraryData || []})
-
-
-        // fetching users daily food entries
-        const { data: dailyEntriesData, error: fetchDailyError } = await supabase
-        .from('Daily Entries')
-        .select('*')
-        .eq('user_id', userID)
-
-        if (fetchDailyError) console.log('Error retrieving daily Food Log', fetchDailyError.message)
-        else set({ dailyEntries: dailyEntriesData || []})
-
-
-            const { data: fetchEntries, error: fetchError } = await supabase
-            .from('Daily Entries')
-            .select('*')
-            .eq('user_id', userID)
-            .gt('logged_at', startDateISO)
-            .lt('logged_at', endDateISO)
-
-            if (fetchError) {
-                console.error('issue fetching daily entries:', fetchError.error.message)
-            }
-            
-            const foodLibPromise = supabase
-            .from('Food Library')
-            .select('*')
-            .limit(15)
-            .or(`user_id.eq.${userID},is_public.eq.true`)
-            
-            const dailyFoodIDs = fetchEntries.map(food => food.food_id)
-            //console.log('dailyFoodIDs', dailyFoodIDs)
-            const bruhProm = supabase
-            .from('Food Library')
-            .select('*')
-            .in('id', dailyFoodIDs)
-
-            const [foodLibResolution, bruhRes] = await Promise.all([foodLibPromise, bruhProm])
-            
-            if (foodLibResolution.error) {
-                console.error('issue fetching food lib:', foodLibResolution.error.message)
-            }
-            //console.log('fetched food lib:', foodLibResolution.data)
-            set({ foodLibrary: foodLibResolution.data || []})
-
-            if (bruhRes.error) {
-                console.error('fuck me:', bruhRes.error.message)
-            }
-
-            //console.log('bruhRes:', bruhRes.data)
-            set({ dailyEntries: bruhRes.data || []})
-            console.log(get().dailyEntries)
-*/

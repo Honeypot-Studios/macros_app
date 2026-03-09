@@ -5,14 +5,17 @@ import { changeObject, checkForDelete } from '../utils/FoodUtils.js'
 import useFoodStore from '../utils/useFoodStore.js'
 import AddNewFood from './AddNewFood.jsx'
 import useUserStore from '../utils/useUserStore.js'
+import { ErrorLogger } from '../utils/Debug.js'
 
 /*=======================================================*/
 //  TODO(s):
-//      - (Implement later) )Have setting in profile
+//      - (Implement later) Have setting in profile
 //        if they want every food made to be public?
-//*      - Need to get specific entries for daily entires
-//*        as foodLib and foodMap only hold a few entries
-//*        at a time
+//*     - (Partially done) Need to get specific entries
+//*       for daily entires as foodLib and foodMap only
+//*       hold a few entries at a time.
+//      - replace curView with better code for food view
+//      - Move whole food library to different component?
 /*=======================================================*/
 
 export default function ViewFood() {
@@ -21,12 +24,14 @@ export default function ViewFood() {
     // Daily entries are 0 (curView default 0), entire food library is 1
     const [curView, setCurView] = useState(0)
     const [isOpen, setIsOpen] = useState(false)
+    const [searchParam, setSearchParam] = useState(0)
 
     const userID = useUserStore((state) => state.userID)
     const getSession = useUserStore((state) => state.getSession)
 
     const fetchFood = useFoodStore((state) => state.fetchFood)
     const foodLibrary = useFoodStore((state) => state.foodLibrary)
+    const userEntries = useFoodStore((state) => state.userEntries)
     const dailyEntries = useFoodStore((state) => state.dailyEntries)
     const deleteFood = useFoodStore((state) => state.deleteFood)
     const addEntry = useFoodStore((state) => state.addEntry)
@@ -42,15 +47,16 @@ export default function ViewFood() {
                     console.warn('Issue with fetching userID')
                     return
                 }
-                fetchFood(userID)
+                fetchFood(userID, searchParam)
             }
             catch (error) {
-                console.error('Error encountered:', error.message)
+                ErrorLogger('ViewFood.jsx - handleDataFetch', error)
+                //console.error('Error encountered:', error.message)
                 return
             }
         }
         handleDataFetch()
-    }, [navigate])
+    }, [navigate, searchParam])
 
     //! Deprecated
     // const foodMap = useMemo(() => {
@@ -59,11 +65,22 @@ export default function ViewFood() {
     //     return savedFoodMap
     // }, [foodLibrary])
 
+    const handlePagination = (searchParam, pageBool) => {
+        if (searchParam > 0 && !pageBool) {
+            setSearchParam(searchParam - 1)
+            return
+        }
+
+        if (pageBool) {
+            setSearchParam(searchParam + 1)
+        }
+    }
+
     const debug = (food) => {
         console.log("food:", food)
         console.log('food food_id:', food.food_id)
     }
-
+    
     return (
         <>
         <div>
@@ -71,13 +88,16 @@ export default function ViewFood() {
             {/*<button onClick={() => navigate('/Dashboard')}>Back to Dashboard</button>*/}
         </div>
         <div>
-            <button onClick={() => setCurView(0)}>View Daily Log</button>
-            <button onClick={() => setCurView(1)}>View Food Library</button>
+            <button onClick={() => navigate(-1)}>Back to Dashboard</button>
         </div>
         <div>
+            <button onClick={() => setCurView(0)}>View Daily Log</button>
+            <button onClick={() => setCurView(1)}>View Food Library</button>
+            <button onClick={() => setCurView(2)}>View Food Library</button>
+        </div>
         <div>
             <ul>
-                {changeObject(curView, foodLibrary, dailyEntries).map((food) => {
+                {changeObject(curView, userEntries, dailyEntries).map((food) => {
                     //console.log('dailyEntries:', dailyEntries)
                     return (
                         <li key={food.id} style={{ marginBottom: '10px' }}>
@@ -92,7 +112,7 @@ export default function ViewFood() {
                             >
                                 Add
                             </button>
-                            {checkForDelete(userID, curView, food) ? 
+                            {checkForDelete(userID, food) ? 
                                 <button
                                     onClick={() => deleteFood(userID, curView, food.id)}
                                     style={{ marginLeft: '10px' }}
@@ -112,7 +132,6 @@ export default function ViewFood() {
                 })}
             </ul>
         </div>
-        </div>
         <div>
             <button onClick={() => setIsOpen(true)}>Add New Food</button>
         </div>
@@ -122,11 +141,50 @@ export default function ViewFood() {
             onClose={() => setIsOpen(false)}
         />
         <div>
-            <button onClick={() => navigate(-1)}>Back to Dashboard</button>
+            <ul>
+                {foodLibrary.map((food) => {
+                    //console.log('dailyEntries:', dailyEntries)
+                    return (
+                        <li key={food.id} style={{ marginBottom: '10px' }}>
+                            Food: {food.food_name}
+                            - Calories: {food.calories}
+                            - Fat: {food.fat}
+                            - Carbs: {food.carbs}
+                            - Protein: {food.protein}
+                            <button
+                                onClick={() => addEntry(userID, food)}
+                                style={{ marginLeft: '10px' }}
+                            >
+                                Add
+                            </button>
+                            {checkForDelete(userID, food) ? 
+                                <button
+                                    onClick={() => deleteFood(userID, curView, food.id)}
+                                    style={{ marginLeft: '10px' }}
+                                >
+                                    Delete
+                                </button> : <></>
+                            }
+                            {/* Developer button */}
+                            <button
+                                onClick={() => debug(food)}
+                                style={{ marginLeft: '10px' }}
+                            >
+                                Create console log
+                            </button>
+                        </li>
+                    )
+                })}
+            </ul>
+        <div>
+            <button onClick={() => handlePagination(searchParam, false)}>
+                Prev
+            </button>
+            <button onClick={() => handlePagination(searchParam, true)}>
+                Next
+            </button>
+        </div>
         </div>
         </>
     )
 }
-
-/*
-*/

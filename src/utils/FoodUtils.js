@@ -23,14 +23,14 @@
 //     }
 // }
 
-export function changeObject(curView, foodLibrary, dailyEntries) {
+export function changeObject(curView, userEntries, dailyEntries) {
     if (curView === 0) return dailyEntries || []
-    return foodLibrary || []
+    return userEntries || []
 }
 
 // check if a food item was logged by the current user
-export function checkForDelete(userID, curView, food) {
-    if (curView === 0) return true
+export function checkForDelete(userID, food) {
+    //if (curView === 0) return true
     if (food.is_public && (food.user_id === userID)) return true
     if (!food.is_public && (food.user_id === userID)) return true
     return false

@@ -1,9 +1,10 @@
-import { useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../utils/supabaseClient.js'
 
 import useFoodStore from '../utils/useFoodStore.js'
 import useUserStore from '../utils/useUserStore.js'
+
 
 export default function Dashboard() {
     const navigate = useNavigate()
@@ -11,6 +12,7 @@ export default function Dashboard() {
     // when using getEntry() to get correct food entry data
     const curView = 0
     const loading = useUserStore((state) => state.loading)
+    const [searchParam, setSearchParam] = useState(0)
 
     //const userID = useUserStore((state) => state.userID)
     const setUserID = useUserStore((state) => state.setUserID)
@@ -32,7 +34,7 @@ export default function Dashboard() {
                     console.warn('Issue with fetching userID')
                     return
                 }
-                fetchFood(userID)
+                fetchFood(userID, searchParam)
                 //console.log('dailyEntries in dashbord:', dailyEntries)
             }
             catch (error) {
