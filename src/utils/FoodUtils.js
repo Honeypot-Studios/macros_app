@@ -23,10 +23,10 @@
 //     }
 // }
 
-export function changeObject(curView, userEntries, dailyEntries) {
-    if (curView === 0) return dailyEntries || []
-    return userEntries || []
-}
+// export function changeObject(curView, userEntries, dailyEntries) {
+//     if (curView === 0) return dailyEntries || []
+//     return userEntries || []
+// }
 
 // check if a food item was logged by the current user
 export function checkForDelete(userID, food) {

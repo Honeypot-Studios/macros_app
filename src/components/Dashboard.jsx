@@ -91,7 +91,7 @@ export default function Dashboard() {
             <ul>
                 {dailyEntries.map((food) => {
                     return (
-                        <li key={food.id} style={{ marginBottom: '10px' }}>
+                        <li key={food.id}>
                             Food: {food.food_name}
                             - Calories: {food.calories}
                             - Fat: {food.fat}
