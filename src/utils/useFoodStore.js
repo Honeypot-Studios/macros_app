@@ -42,8 +42,6 @@ const useFoodStore = create((set, get) => ({
             .select('*')
             .limit(15)
             .eq('user_id', userID)
-            //.eq('is_public', true)
-            //.or(`user_id.eq.${userID},is_public.eq.true`)
             
             const dailyEntPromise = supabase
             .from('Daily Entries')
@@ -80,7 +78,6 @@ const useFoodStore = create((set, get) => ({
                 ErrorLogger('useFoodStore.js - fetchFood', error)
             }
             //console.log('length of user entries:', get().userEntries.length)
-            // user@test.com has 510 entries
             //console.log('fetched user entries:', userEntResolution.data)
             set({ userEntries: userEntResolution.data || []})
             

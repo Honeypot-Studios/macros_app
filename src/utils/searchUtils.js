@@ -2,7 +2,8 @@ import { supabase } from "./supabaseClient";
 
 /*=======================================================*/
 //  ToDo
-//   - (Done) get fetchLib() to work
+//      - (Done) get fetchLib() to work
+//      - 
 /*=======================================================*/
 
 export const foodSearch = {

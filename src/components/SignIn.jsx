@@ -2,11 +2,14 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../utils/supabaseClient.js'
 import { useNavigate } from 'react-router-dom'
 
+import useUserStore from '../utils/useUserStore.js'
+
 
 export default function SignIn() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const checkDelete = useUserStore((state) => state.checkDelete)
 
     useEffect(() => {
         document.title = "Macros App | Sign In"
@@ -22,7 +25,14 @@ export default function SignIn() {
       console.error('Error signing in:', signInError.message)
       return
     }
-    console.log('Logged in:', signInData)
+
+    if (await checkDelete(signInData.user.id)) {
+      alert('Account is inactive.')
+      setEmail('')
+      setPassword('')
+      return
+    }
+
     navigate('/Dashboard')
     setEmail('')
     setPassword('')

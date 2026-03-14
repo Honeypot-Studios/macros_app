@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { supabase } from './supabaseClient.js'
 
+import { ErrorLogger } from './Debug.js'
+
 const useUserStore = create((set, get) => ({
     loading: false,
     userID: null,
@@ -17,14 +19,14 @@ const useUserStore = create((set, get) => ({
             const { data: { session } , error: sessionError } = await supabase.auth.getSession()
 
             if (!session || sessionError) {
-                console.error('Error fetching session:', sessionError.message)
+                ErrorLogger('useUserStore.js - getSession', sessionError)
                 navigate('/')
                 return
             }
+
             set({ userID: session.user.id })
-            //fetchUserData(session.user.id)
         } catch (error) {
-            console.error('Error encountered:', error.message)
+            ErrorLogger('useUserStore.js - getSession', error)
             navigate('/')
             return
         } finally {
@@ -42,12 +44,30 @@ const useUserStore = create((set, get) => ({
         .single()
 
         if (fetchError) {
-            console.error('Invalid User', fetchError.message)
+            ErrorLogger('useUserStore.js - fetchUserData', fetchError)
             return
         }
 
         //console.log('Retrieved User Data', fetchedUserData)
         set({ userData: fetchedUserData})
+    },
+
+    checkDelete: async(userID) => {
+        const { data: profile, error: fetchError } = await supabase
+        .from('User Profiles')
+        .select('deleted_at')
+        .eq('user_id', userID)
+        .single()
+
+        if (fetchError) {
+            ErrorLogger('useUserStore.js - checkDelete', fetchError)
+            return
+        }
+        
+        if (profile.deleted_at) {
+            return true
+        }
+        return false
     }
 }))
 

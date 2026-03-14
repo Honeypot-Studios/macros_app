@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom"
 import { supabase } from "../utils/supabaseClient"
 
 import useUserStore from "../utils/useUserStore"
+import { ErrorLogger } from "../utils/Debug"
 
 /*=======================================================*/
 //   ToDo
@@ -19,13 +20,15 @@ export default function UserProfile() {
     const navigate = useNavigate()
     const [loading, setLoading] = useState(false)
 
-    //const userID = useUserStore((state) => state.userID)
+    const userID = useUserStore((state) => state.userID)
+    const setUserID = useUserStore((state) => state.setUserID)
     const userData = useUserStore((state) => state.userData)
     const fetchUserData = useUserStore((state) => state.fetchUserData)
     const getSession = useUserStore((state) => state.getSession)
 
     const [newPassword, setNewPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
+    const [accountDelBool, setAccountDelBool] = useState(false)
 
     useEffect(() => {
         document.title = "Macros App | Profile"
@@ -41,7 +44,7 @@ export default function UserProfile() {
                 await fetchUserData(userID)
             } 
             catch (error) {
-                console.error('Error encountered:', error.message)
+                ErrorLogger('UserProfile.jsx - handleDataFetch', error)
                 return
             }
         }
@@ -49,7 +52,7 @@ export default function UserProfile() {
         //console.log('userData:', userData)
     }, [navigate])
 
-    const updatePassword = async (newPassword, confirmPassword) => {
+    const handleUpdatePassword = async (newPassword, confirmPassword) => {
         setLoading(true)
 
         if (newPassword !== confirmPassword) {
@@ -63,7 +66,7 @@ export default function UserProfile() {
         })
 
         if (error) {
-            console.error('Failed to update password:', error.message)
+            ErrorLogger('UserProfile.jsx - handleUpdatePassword', error)
             setLoading(false)
             return
         }
@@ -72,6 +75,48 @@ export default function UserProfile() {
         setLoading(false)
         setNewPassword('')
         setConfirmPassword('')
+    }
+
+    // Soft delete
+    const handleAccountDelete = async () => {
+
+        if (!accountDelBool) {
+            console.warn('accountDelBool != true')
+            return
+        }
+        if (!userID) {
+            console.warn("Error with userID, invalid session?")
+            return
+        }
+        
+        console.log('userID:', userID)
+        const todayDateISO = new Date().toISOString()
+        const { error: deleteError } = await supabase
+        .from('User Profiles')
+        .update([
+            {
+                deleted_at: todayDateISO
+            }
+        ])
+        .eq('user_id', userID)
+        .select()
+        
+        if (deleteError) {
+            ErrorLogger('UserProfile.jsx - handleAccountDelete', deleteError)
+            return
+        }
+
+        console.log('User deleted at:', todayDateISO)
+        const { error: signOutError } = await supabase.auth.signOut()
+
+        if (signOutError) {
+            ErrorLogger("UserProfile.jsx - handleAccountDelete", signOutError)
+            return
+        }
+
+        console.log('User deleted, signed out')
+        setUserID(null)
+        navigate('/')
     }
 
     return (
@@ -92,7 +137,7 @@ export default function UserProfile() {
         <div>
             <form onSubmit={(e) => {
                 e.preventDefault()
-                updatePassword(newPassword, confirmPassword)
+                handleUpdatePassword(newPassword, confirmPassword)
             }}>
                 <input 
                     type='password'
@@ -116,6 +161,18 @@ export default function UserProfile() {
                     </button>
                 </div>
             </form>
+        </div>
+        <div>
+            {(!accountDelBool) ? 
+                <button onClick={() => setAccountDelBool(true)}>
+                    Delete Account
+                </button> : 
+                <>
+                    <p>Are you sure?</p>
+                    <button onClick={() => handleAccountDelete()}>Yes</button>
+                    <button onClick={() => setAccountDelBool(false)}>No</button>
+                </>
+            }
         </div>
         <div>
             <button onClick={() => navigate(-1)}>Go Back</button>
