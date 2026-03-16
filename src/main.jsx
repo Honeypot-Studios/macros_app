@@ -7,7 +7,7 @@ import MainPage from './components/MainPage.jsx'
 import SignIn from './components/SignIn.jsx'
 import SignUp from './components/SignUp.jsx'
 import ForgotPassword from './components/ForgotPassword.jsx'
-import UpdatePassword from './components/UpdatePassword.jsx'
+import ResetPassword from './components/ResetPassword.jsx'
 import UserProfile from './components/UserProfile.jsx'
 import Dashboard from './components/Dashboard.jsx'
 import ViewFood from './components/ViewFood.jsx'
@@ -24,7 +24,7 @@ createRoot(document.getElementById('root')).render(
         <Route path="/SignIn" element={<SignIn />}/>
         <Route path="/SignUp" element={<SignUp />}/>
         <Route path='/ForgotPassword' element={<ForgotPassword />} />
-        <Route path='/UpdatePassword' element={<UpdatePassword />} />
+        <Route path='/ResetPassword' element={<ResetPassword />} />
         <Route path="/UserProfile" element={<UserProfile />} />
         <Route path="/Dashboard" element={<Dashboard />}/>
         <Route path="/ViewFood" element={<ViewFood />}/>

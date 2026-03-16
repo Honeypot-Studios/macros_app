@@ -23,7 +23,7 @@ export default function ForgotPassword() {
         }
 
         const { error } = await supabase.auth.resetPasswordForEmail(userEmail, {
-            redirectTo: 'http://localhost:5173/UpdatePassword',
+            redirectTo: 'http://localhost:5173/ResetPassword',
         })
         
         if (error) {
@@ -41,27 +41,30 @@ export default function ForgotPassword() {
         <>
         <div>
             <h2>Forgot Password?</h2>
-            <p>Please enter email for account so we can send a reset link.</p>
             {emailSent ? 
-            <h3>Email has been sent! Please exit out of page.</h3> :
-            <form
-            onSubmit={(e) => {
-                e.preventDefault()
-                sendResetEmail(email)
-            }}>
-                <input
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                />
-                <div>
-                    <button type='submit' disabled={loading}>
-                        {loading ? 'Sending Email...' : 'Send Email'}
-                    </button>
-                </div>
-            </form>}
+            <h3>Email has been sent! Please exit out of page.</h3> : (
+                <>
+                <p>Please enter email for account so we can send a reset link.</p>
+                <form
+                onSubmit={(e) => {
+                    e.preventDefault()
+                    sendResetEmail(email)
+                }}>
+                    <input
+                        type="email"
+                        placeholder="Email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                    />
+                    <div>
+                        <button type='submit' disabled={loading}>
+                            {loading ? 'Sending Email...' : 'Send Email'}
+                        </button>
+                    </div>
+                </form>
+                </>
+            )}
         </div>
         <div>
             <button onClick={() => navigate(-1)}>Go Back</button>

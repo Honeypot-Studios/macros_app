@@ -52,12 +52,14 @@ export default function UserProfile() {
         //console.log('userData:', userData)
     }, [navigate])
 
-    const handleUpdatePassword = async (newPassword, confirmPassword) => {
+    const handleUpdatePassword = async () => {
+        
         setLoading(true)
-
         if (newPassword !== confirmPassword) {
             alert('Passwords do not match')
             setLoading(false)
+            setNewPassword('')
+            setConfirmPassword('')
             return
         }
 
@@ -65,31 +67,25 @@ export default function UserProfile() {
             password: newPassword
         })
 
+        setNewPassword('')
+        setConfirmPassword('')
         if (error) {
             ErrorLogger('UserProfile.jsx - handleUpdatePassword', error)
             setLoading(false)
             return
         }
-
-        //console.log('Password successfully updated')
         setLoading(false)
-        setNewPassword('')
-        setConfirmPassword('')
+
     }
 
     // Soft delete
     const handleAccountDelete = async () => {
 
-        if (!accountDelBool) {
-            console.warn('accountDelBool != true')
+        if (!accountDelBool || !userID) {
+            console.warn('Issue encountered when deleting.')
             return
         }
-        if (!userID) {
-            console.warn("Error with userID, invalid session?")
-            return
-        }
-        
-        console.log('userID:', userID)
+
         const todayDateISO = new Date().toISOString()
         const { error: deleteError } = await supabase
         .from('User Profiles')
@@ -106,17 +102,15 @@ export default function UserProfile() {
             return
         }
 
-        console.log('User deleted at:', todayDateISO)
         const { error: signOutError } = await supabase.auth.signOut()
 
         if (signOutError) {
             ErrorLogger("UserProfile.jsx - handleAccountDelete", signOutError)
             return
         }
-
-        console.log('User deleted, signed out')
         setUserID(null)
         navigate('/')
+
     }
 
     return (
@@ -137,7 +131,7 @@ export default function UserProfile() {
         <div>
             <form onSubmit={(e) => {
                 e.preventDefault()
-                handleUpdatePassword(newPassword, confirmPassword)
+                handleUpdatePassword()
             }}>
                 <input 
                     type='password'

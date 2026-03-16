@@ -1,58 +1,53 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../utils/supabaseClient'
-import useUserStore from '../utils/useUserStore'
 
 
 export default function UpdatePassword() {
     const navigate = useNavigate()
     const [loading, setLoading] = useState(false)
-    
-    const userID = useUserStore((state) => state.userID)
+
     const [newPassword, setNewPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
-    const [message, setMessage] = useState('')
 
     useEffect(() => {
         document.title = 'Macros App | Update Password'
     }, [navigate])
     
-    const handlePasswordReset = async (newPassword, confirmPassword) => {
-        setLoading(true)
-        setMessage('')
+    const handlePasswordChange = async () => {
         
+        setLoading(true)
         if (newPassword !== confirmPassword) {
             alert('Passwords do not match')
             setLoading(false)
-            return
+            setNewPassword('')
+            setConfirmPassword('')
+            return false
         }
-
+        
         const { error } = await supabase.auth.updateUser({
             password: newPassword
         })
 
-        if (error) {
-            console.error('Error reseting password', error.message)
-            setMessage(`Error reseting password. Error: ${error.message}`)
-            setLoading(false)
-            return
-        }
-
-        setMessage('Updated passsword! Redirecting...')
-        setLoading(false)
-        navigate('/')
         setNewPassword('')
         setConfirmPassword('')
+        if (error) {
+            ErrorLogger('useUserStore.jsx - changePassword', error)
+            return false
+        }
+
+        setLoading(false)
+        navigate('/')
+
     }
 
     return (
         <>
             <div>
-                <h2>Reset Password</h2>
                 <p>Enter new password below</p>
                 <form onSubmit={(e) => {
                     e.preventDefault()
-                    handlePasswordReset(newPassword, confirmPassword)
+                    handlePasswordChange()
                 }}>
                     <input 
                         type='password'
@@ -76,12 +71,6 @@ export default function UpdatePassword() {
                         </button>
                     </div>
                 </form>
-                <div>
-                    {message && <p>{message}</p>}
-                </div>
-                <div>
-                    <button onClick={() => navigate(-1)}>Go Back</button>
-                </div>
             </div>
         </>
     )
