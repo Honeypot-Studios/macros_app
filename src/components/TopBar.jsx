@@ -1,8 +1,13 @@
 import { useNavigate, Link } from 'react-router-dom'
+
 import useUserStore from '../utils/useUserStore.js'
 
 import '../assets/TopBar.css'
 
+/*=========================================================*/
+//  TODO(s):
+//      - Implement this shit
+/*=========================================================*/
 
 export default function TopBar() {
     const navigate = useNavigate()

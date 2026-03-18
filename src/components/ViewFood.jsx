@@ -1,39 +1,36 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { checkForDelete } from '../utils/FoodUtils.js'
-import useFoodStore from '../utils/useFoodStore.js'
+import ListFood from './ListFood.jsx'
 import AddNewFood from './AddNewFood.jsx'
+import useFoodStore from '../utils/useFoodStore.js'
 import useUserStore from '../utils/useUserStore.js'
 import { ErrorLogger } from '../utils/Debug.js'
 
 /*=========================================================*/
 //  TODO(s):
-//      - (Implement later) Have setting in profile
-//        if they want every food made to be public?
-//*     - (Partially done) Need to get specific entries
-//*       for daily entires as foodLib and foodMap only
-//*       hold a few entries at a time.
-//      - (Done) replace curView with better code for view
-//      - Move whole food library to different component?
+//      - (Implement later) Have setting in profile if they
+//        want every food made to be public?
 /*=========================================================*/
 
 export default function ViewFood() {
     const navigate = useNavigate()
-
-    const [curView, setCurView] = useState([])
     const [isOpen, setIsOpen] = useState(false)
-    const [searchParam, setSearchParam] = useState(0)
 
     const userID = useUserStore((state) => state.userID)
     const getSession = useUserStore((state) => state.getSession)
-
-    const fetchFood = useFoodStore((state) => state.fetchFood)
-    const foodLibrary = useFoodStore((state) => state.foodLibrary)
-    const userEntries = useFoodStore((state) => state.userEntries)
+    
+    let activeView = []
+    const curView = useFoodStore((state) => state.curView)
+    const setCurView = useFoodStore((state) => state.setCurView)  
+    const [searchParam, setSearchParam] = useState(0)
+    
+    const fetchDaily = useFoodStore((state) => state.fetchDaily)
+    const fetchUserEntries = useFoodStore((state) => state.fetchUserEntries)
+    const fetchFoodLib = useFoodStore((state) => state.fetchFoodLib)
     const dailyEntries = useFoodStore((state) => state.dailyEntries)
-    const deleteFood = useFoodStore((state) => state.deleteFood)
-    const addEntry = useFoodStore((state) => state.addEntry)
+    const userEntries = useFoodStore((state) => state.userEntries)
+    const foodLibrary = useFoodStore((state) => state.foodLibrary)
     
     useEffect(() => {
         document.title = "Macros App | ViewFood"
@@ -46,40 +43,20 @@ export default function ViewFood() {
                     console.warn('Issue with fetching userID')
                     return
                 }
-                fetchFood(userID, searchParam)
+                fetchDaily(userID)
+                fetchUserEntries(userID)
+                fetchFoodLib(userID, searchParam)
             }
             catch (error) {
                 ErrorLogger('ViewFood.jsx - handleDataFetch', error)
-                //console.error('Error encountered:', error.message)
                 return
             }
         }
         handleDataFetch()
     }, [navigate, searchParam])
 
-    //! Deprecated
-    // const foodMap = useMemo(() => {
-    //     const savedFoodMap = new Map(foodLibrary.map(food => [food.id, food]))
-    //     //console.log('savedFoodMap:', savedFoodMap)
-    //     return savedFoodMap
-    // }, [foodLibrary])
-
-    const handleView = (view) => {
-        switch (view) {
-            case "Daily":
-                setCurView(dailyEntries)
-                break
-            case "User":
-                setCurView(userEntries)
-                break
-            default:
-                console.warn('error handling view:', view)
-                setCurView([])
-                return
-        }
-    }
-
     const handlePagination = (searchParam, pageBool) => {
+
         if (searchParam > 0 && !pageBool) {
             setSearchParam(searchParam - 1)
             return
@@ -88,12 +65,12 @@ export default function ViewFood() {
         if (pageBool) {
             setSearchParam(searchParam + 1)
         }
+
     }
 
-    const debug = (food) => {
-        console.log("food:", food)
-        console.log('food food_id:', food.food_id)
-    }
+    if (curView === 'Daily Entries') activeView = dailyEntries
+    else if (curView === 'User Entries') activeView = userEntries
+    else if (curView === 'Food Library') activeView = foodLibrary
     
     return (
         <>
@@ -109,44 +86,29 @@ export default function ViewFood() {
             </button>
         </div>
         <div>
-            <button onClick={() => handleView("Daily")}>Daily Log</button>
-            <button onClick={() => handleView("User")}>Your Entries</button>
+            <button onClick={() => setCurView("Daily Entries")}>Daily Entries</button>
+            <button onClick={() => setCurView("User Entries")}>Your Entries</button>
+            <button onClick={() => setCurView("Food Library")}>Food Library</button>
         </div>
+
+        <ListFood 
+            userID={userID}
+            activeView={activeView}
+        />
+        
         <div>
-            <ul>
-                {curView.map((food) => {
-                    return (
-                        <li key={food.id}>
-                            Food: {food.food_name}
-                            - Calories: {food.calories}
-                            - Fat: {food.fat}
-                            - Carbs: {food.carbs}
-                            - Protein: {food.protein}
-                            <button
-                                onClick={() => addEntry(userID, food)}
-                                style={{ margin: '10px' }}
-                            >
-                                Add
-                            </button>
-                            {checkForDelete(userID, food) && curView !== foodLibrary ? 
-                                <button
-                                    onClick={() => deleteFood(userID, curView, food.id)}
-                                    style={{ margin: '10px' }}
-                                >
-                                    Delete
-                                </button> : <></>
-                            }
-                            {/* Developer button */}
-                            <button
-                                onClick={() => debug(food)}
-                                style={{ margin: '10px' }}
-                            >
-                                Create console log
-                            </button>
-                        </li>
-                    )
-                })}
-            </ul>
+            <button 
+                onClick={() => handlePagination(searchParam, false)} 
+                style={{ margin: '10px' }}
+            >
+                Prev
+            </button>
+            <button 
+                onClick={() => handlePagination(searchParam, true)} 
+                style={{ margin: '10px' }}
+            >
+                Next
+            </button>
         </div>
         <div>
             <button onClick={() => setIsOpen(true)}>Add New Food</button>
@@ -156,48 +118,6 @@ export default function ViewFood() {
             isOpen={isOpen}
             onClose={() => setIsOpen(false)}
         />
-        <div>
-            <ul>
-                {foodLibrary.map((food) => {
-                    return (
-                        <li key={food.id}>
-                            Food: {food.food_name}
-                            - Calories: {food.calories}
-                            - Fat: {food.fat}
-                            - Carbs: {food.carbs}
-                            - Protein: {food.protein}
-                            <button
-                                onClick={() => addEntry(userID, food)}
-                                style={{ margin: '10px' }}
-                            >
-                                Add
-                            </button>
-                            {/* Developer button */}
-                            <button
-                                onClick={() => debug(food)}
-                                style={{ margin: '10px' }}
-                            >
-                                Create console log
-                            </button>
-                        </li>
-                    )
-                })}
-            </ul>
-            <div>
-                <button 
-                    onClick={() => handlePagination(searchParam, false)} 
-                    style={{ margin: '10px' }}
-                >
-                    Prev
-                </button>
-                <button 
-                    onClick={() => handlePagination(searchParam, true)} 
-                    style={{ margin: '10px' }}
-                >
-                    Next
-                </button>
-            </div>
-        </div>
         </>
     )
 }

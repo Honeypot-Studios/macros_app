@@ -1,25 +1,20 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../utils/supabaseClient.js'
 
+import ListFood from './ListFood.jsx'
 import useFoodStore from '../utils/useFoodStore.js'
 import useUserStore from '../utils/useUserStore.js'
 
 
 export default function Dashboard() {
     const navigate = useNavigate()
-    // Show casing daily entries on users dashboard, need curView = 0
-    // when using getEntry() to get correct food entry data
-    const curView = 0
-    const loading = useUserStore((state) => state.loading)
-    const [searchParam, setSearchParam] = useState(0)
 
-    //const userID = useUserStore((state) => state.userID)
+    const userID = useUserStore((state) => state.userID)
     const setUserID = useUserStore((state) => state.setUserID)
     const getSession = useUserStore((state) => state.getSession)
 
-    const fetchFood = useFoodStore((state) => state.fetchFood)
-    const foodLibrary = useFoodStore((state) => state.foodLibrary)
+    const fetchDaily = useFoodStore((state) => state.fetchDaily)
     const dailyEntries = useFoodStore((state) => state.dailyEntries)
     const calculateDailyTotal = useFoodStore((state) => state.calculateDailyTotal)
 
@@ -34,8 +29,7 @@ export default function Dashboard() {
                     console.warn('Issue with fetching userID')
                     return
                 }
-                fetchFood(userID, searchParam)
-                //console.log('dailyEntries in dashbord:', dailyEntries)
+                fetchDaily(userID)
             }
             catch (error) {
                 console.error('Error encountered:', error.message)
@@ -44,13 +38,6 @@ export default function Dashboard() {
         }
         handleDataFetch()
     }, [navigate])
-
-    //! Deprecated
-    // const foodMap = useMemo(() => {
-    //     const savedFoodMap = new Map(foodLibrary.map(food => [food.id, food]))
-    //     //console.log('savedFoodMap:', savedFoodMap)
-    //     return savedFoodMap
-    // }, [foodLibrary])
 
     const handleDailyTotal = useMemo(() => {
         return calculateDailyTotal(dailyEntries)
@@ -66,42 +53,23 @@ export default function Dashboard() {
             navigate('/')
         }
     }
-
-    if (loading) {
-        //console.log('Loading Session')
-        return <div>Loading...</div>
-    }
-
+    
     return (
         <>
         <div>
             <h2>Dashboard</h2>
             <button onClick={() => navigate('/ViewFood')}>View Food Library</button>
         </div>
+        <ListFood 
+            userID={userID}
+            activeView={dailyEntries}
+        />
         <div>
             <h3>Today's totals</h3>
             <p>Calories: {handleDailyTotal.calories}</p>
             <p>fat: {handleDailyTotal.fat}</p>
             <p>carbs: {handleDailyTotal.carbs}</p>
             <p>protein: {handleDailyTotal.protein}</p>
-        </div>
-        <div>
-            <h3>Daily Entries</h3>
-            {dailyEntries.length > 0 ?
-            <ul>
-                {dailyEntries.map((food) => {
-                    return (
-                        <li key={food.id}>
-                            Food: {food.food_name}
-                            - Calories: {food.calories}
-                            - Fat: {food.fat}
-                            - Carbs: {food.carbs}
-                            - Protein: {food.protein}
-                        </li>
-                    )
-                })}
-            </ul> : <p>No Food Yet!</p>
-            }
         </div>
         <div>
             <button onClick={handleSignOut}>Sign Out</button>

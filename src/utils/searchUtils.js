@@ -2,13 +2,13 @@ import { supabase } from "./supabaseClient";
 
 /*=======================================================*/
 //  ToDo
-//      - (Done) get fetchLib() to work
-//      - 
+//      - Do some shit
+//      - Search bar function?
 /*=======================================================*/
 
 export const foodSearch = {
-    fetchLib: async (userID, page = 0, pageSize = 15 ) => {
-        //console.log('page and pageSize:', page, pageSize)
+    fetchLib: (userID, page = 0, pageSize = 15 ) => {
+        
         const query = supabase
         .from('Food Library')
         .select('*')
